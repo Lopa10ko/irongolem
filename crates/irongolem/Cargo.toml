@@ -1,11 +1,16 @@
 [package]
 name = "irongolem"
-version.workspace = true
-edition.workspace = true
-license.workspace = true
-description = "Graph Optimiser for Learning and Evolution of Models (core not implemented yet)"
-repository.workspace = true
-rust-version.workspace = true
+version = "0.1.0"
+description = "Graph Optimiser for Learning and Evolution of Models"
+
+authors = ["Georgii Lopatenko <lopa10ko@itmo.ru>"]
+readme = "../../README.md"
+license = "BSD-3-Clause"
+edition = "2021"
+repository = "https://github.com/Lopa10ko/irongolem"
+rust-version = "1.78"
+keywords = ["optimization", "graphs", "evolutionary"]
+categories = ["science", "algorithms"]
 
 [lib]
 path = "src/lib.rs"
