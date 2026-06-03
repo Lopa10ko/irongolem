@@ -1,0 +1,11 @@
+[package]
+name = "irongolem"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "Graph Optimiser for Learning and Evolution of Models (core not implemented yet)"
+repository.workspace = true
+rust-version.workspace = true
+
+[lib]
+path = "src/lib.rs"

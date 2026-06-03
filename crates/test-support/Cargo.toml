@@ -1,0 +1,15 @@
+[package]
+name = "test-support"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish = false
+description = "Test fixtures and API surface used by irongolem unit tests (TDD phase)"
+
+[dependencies]
+serde.workspace = true
+serde_json.workspace = true
+uuid.workspace = true
+
+[dev-dependencies]
+serde_json.workspace = true
