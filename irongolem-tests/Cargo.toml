@@ -1,0 +1,15 @@
+[package]
+name = "irongolem-tests"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish = false
+
+[dependencies]
+test-support = { path = "../crates/test-support" }
+serde_json.workspace = true
+
+[[test]]
+name = "unit"
+path = "tests/unit.rs"
+harness = true
