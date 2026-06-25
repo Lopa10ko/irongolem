@@ -1,21 +1,27 @@
-//! graph_comparison
+use super::fixtures::{graph_first, graph_fourth, graph_second, graph_third};
 
 #[test]
 fn test_equality_cases() {
-    // def test_equality_cases(graph_fixture, request):
-    //     list_graph_pairs = request.getfixturevalue(graph_fixture)
-    //     for pair in list_graph_pairs:
-    //         assert pair[0] == pair[1]
-    //         assert pair[1] == pair[0]
-    assert!(false);
+    let pairs = [
+        (graph_first(), graph_first()),
+        (graph_third(), graph_third()),
+        (graph_fourth(), graph_fourth()),
+    ];
+    for (left, right) in pairs {
+        assert_eq!(left, right);
+        assert_eq!(right, left);
+    }
 }
 
 #[test]
 fn test_non_equality_cases() {
-    // def test_non_equality_cases(graph_fixture, request):
-    //     list_graph_pairs = request.getfixturevalue(graph_fixture)
-    //     for pair in list_graph_pairs:
-    //         assert not pair[0] == pair[1]
-    //         assert not pair[1] == pair[0]
-    assert!(false);
+    let pairs = [
+        (graph_first(), graph_second()),
+        (graph_first(), graph_third()),
+        (graph_second(), graph_third()),
+    ];
+    for (left, right) in pairs {
+        assert_ne!(left, right);
+        assert_ne!(right, left);
+    }
 }

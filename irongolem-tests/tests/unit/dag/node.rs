@@ -1,22 +1,24 @@
-use std::collections::HashMap;
+use std::collections::BTreeMap;
 
+use irongolem::dag::{LinkedGraph, NodeContent};
 use serde_json::json;
-use test_support::golem::dag::{GraphNode, LinkedGraphNode, NodeContent};
 
 #[test]
 fn test_node_description() {
     let operation_type = "logit";
-    let node = LinkedGraphNode::new(NodeContent::new(operation_type));
+    let mut g = LinkedGraph::new();
+    let node = g.add_detached(NodeContent::new(operation_type), &[]);
     let expected = format!("n_{operation_type}");
-    assert_eq!(node.read().unwrap().description(), expected);
+    assert_eq!(g.description(node), expected);
 }
 
 #[test]
 fn test_node_description_with_params() {
     let operation_type = "logit";
-    let mut params = HashMap::new();
+    let mut params = BTreeMap::new();
     params.insert("some_param".to_string(), json!(10));
-    let node = LinkedGraphNode::new(NodeContent::with_params(operation_type, params.clone()));
-    let expected = format!("n_{operation_type}_{params:?}");
-    assert_eq!(node.read().unwrap().description(), expected);
+    let mut g = LinkedGraph::new();
+    let node = g.add_detached(NodeContent::with_params(operation_type, params), &[]);
+    // Params are rendered with `{:?}` over the (sorted) BTreeMap of serde_json values.
+    assert_eq!(g.description(node), "n_logit_{\"some_param\": Number(10)}");
 }

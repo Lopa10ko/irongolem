@@ -1,3 +1,4 @@
+pub mod fixtures;
 pub mod graph;
 pub mod graph_comparison;
 pub mod graph_operator;

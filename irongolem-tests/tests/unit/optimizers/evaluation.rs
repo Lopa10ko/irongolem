@@ -14,7 +14,10 @@ use test_support::golem::utilities::determine_n_jobs;
 fn set_up_tests() -> (DirectAdapter, Vec<Individual>) {
     let adapter = DirectAdapter;
     let graphs = [graph_first(), graph_second(), graph_third(), graph_fourth()];
-    let population: Vec<Individual> = graphs.into_iter().map(|g| Individual::new(Arc::new(g))).collect();
+    let population: Vec<Individual> = graphs
+        .into_iter()
+        .map(|g| Individual::new(Arc::new(g)))
+        .collect();
     (adapter, population)
 }
 
@@ -78,7 +81,9 @@ fn test_dispatchers_with_faulty_objectives_sequential() {
 
 #[test]
 fn test_n_jobs_for_dispatcher() {
-    let cpu_count = std::thread::available_parallelism().map(|n| n.get() as i32).unwrap_or(1);
+    let cpu_count = std::thread::available_parallelism()
+        .map(|n| n.get() as i32)
+        .unwrap_or(1);
     for n_jobs in -cpu_count..cpu_count + 5 {
         if n_jobs != 0 {
             let correct = if n_jobs > 0 {
