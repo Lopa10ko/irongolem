@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
-use crate::golem::dag::GraphDelegate;
 use super::fitness::Fitness;
+use crate::golem::dag::GraphDelegate;
 
 #[derive(Debug, Clone)]
 pub struct Individual {

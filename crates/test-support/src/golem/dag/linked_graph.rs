@@ -29,8 +29,10 @@ pub trait Graph {
     fn depth(&self) -> usize;
     fn length(&self) -> usize;
     fn get_edges(&self) -> Vec<(Arc<RwLock<LinkedGraphNode>>, Arc<RwLock<LinkedGraphNode>>)>;
-    fn node_children(&self, node: &Arc<RwLock<LinkedGraphNode>>)
-        -> Vec<Arc<RwLock<LinkedGraphNode>>>;
+    fn node_children(
+        &self,
+        node: &Arc<RwLock<LinkedGraphNode>>,
+    ) -> Vec<Arc<RwLock<LinkedGraphNode>>>;
     fn graphs_equal(&self, other: &dyn Graph) -> bool;
     fn descriptive_id(&self) -> String;
 }
@@ -60,9 +62,24 @@ impl LinkedGraph {
 impl Graph for LinkedGraph {
     fn delete_node(&mut self, _node: &Arc<RwLock<LinkedGraphNode>>, _reconnect: ReconnectType) {}
     fn delete_subtree(&mut self, _node: &Arc<RwLock<LinkedGraphNode>>) {}
-    fn update_node(&mut self, _old: &Arc<RwLock<LinkedGraphNode>>, _new: &Arc<RwLock<LinkedGraphNode>>) {}
-    fn update_subtree(&mut self, _old: &Arc<RwLock<LinkedGraphNode>>, _new: &Arc<RwLock<LinkedGraphNode>>) {}
-    fn connect_nodes(&mut self, _parent: &Arc<RwLock<LinkedGraphNode>>, _child: &Arc<RwLock<LinkedGraphNode>>) {}
+    fn update_node(
+        &mut self,
+        _old: &Arc<RwLock<LinkedGraphNode>>,
+        _new: &Arc<RwLock<LinkedGraphNode>>,
+    ) {
+    }
+    fn update_subtree(
+        &mut self,
+        _old: &Arc<RwLock<LinkedGraphNode>>,
+        _new: &Arc<RwLock<LinkedGraphNode>>,
+    ) {
+    }
+    fn connect_nodes(
+        &mut self,
+        _parent: &Arc<RwLock<LinkedGraphNode>>,
+        _child: &Arc<RwLock<LinkedGraphNode>>,
+    ) {
+    }
     fn add_node(&mut self, node: Arc<RwLock<LinkedGraphNode>>) {
         if self.roots.is_empty() {
             self.roots.push(node.clone());
@@ -89,7 +106,10 @@ impl Graph for LinkedGraph {
     fn get_edges(&self) -> Vec<(Arc<RwLock<LinkedGraphNode>>, Arc<RwLock<LinkedGraphNode>>)> {
         Vec::new()
     }
-    fn node_children(&self, _node: &Arc<RwLock<LinkedGraphNode>>) -> Vec<Arc<RwLock<LinkedGraphNode>>> {
+    fn node_children(
+        &self,
+        _node: &Arc<RwLock<LinkedGraphNode>>,
+    ) -> Vec<Arc<RwLock<LinkedGraphNode>>> {
         Vec::new()
     }
     fn graphs_equal(&self, _other: &dyn Graph) -> bool {

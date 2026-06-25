@@ -1,10 +1,10 @@
 use std::sync::Arc;
 
-use crate::golem::adapter::DirectAdapter;
-use crate::golem::dag::GraphDelegate;
 use super::fitness::Fitness;
 use super::history::Individual;
 use super::timer::OptimisationTimer;
+use crate::golem::adapter::DirectAdapter;
+use crate::golem::dag::GraphDelegate;
 
 pub type ObjectiveFn = Arc<dyn Fn(Arc<GraphDelegate>) -> Fitness + Send + Sync>;
 pub type Evaluator = Arc<dyn Fn(Vec<Individual>) -> Vec<Individual> + Send + Sync>;

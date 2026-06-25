@@ -36,13 +36,25 @@ impl Graph for GraphDelegate {
     fn delete_subtree(&mut self, node: &Arc<RwLock<LinkedGraphNode>>) {
         self.operator.delete_subtree(node);
     }
-    fn update_node(&mut self, old: &Arc<RwLock<LinkedGraphNode>>, new: &Arc<RwLock<LinkedGraphNode>>) {
+    fn update_node(
+        &mut self,
+        old: &Arc<RwLock<LinkedGraphNode>>,
+        new: &Arc<RwLock<LinkedGraphNode>>,
+    ) {
         self.operator.update_node(old, new);
     }
-    fn update_subtree(&mut self, old: &Arc<RwLock<LinkedGraphNode>>, new: &Arc<RwLock<LinkedGraphNode>>) {
+    fn update_subtree(
+        &mut self,
+        old: &Arc<RwLock<LinkedGraphNode>>,
+        new: &Arc<RwLock<LinkedGraphNode>>,
+    ) {
         self.operator.update_subtree(old, new);
     }
-    fn connect_nodes(&mut self, parent: &Arc<RwLock<LinkedGraphNode>>, child: &Arc<RwLock<LinkedGraphNode>>) {
+    fn connect_nodes(
+        &mut self,
+        parent: &Arc<RwLock<LinkedGraphNode>>,
+        child: &Arc<RwLock<LinkedGraphNode>>,
+    ) {
         self.operator.connect_nodes(parent, child);
     }
     fn add_node(&mut self, node: Arc<RwLock<LinkedGraphNode>>) {
@@ -66,7 +78,10 @@ impl Graph for GraphDelegate {
     fn get_edges(&self) -> Vec<(Arc<RwLock<LinkedGraphNode>>, Arc<RwLock<LinkedGraphNode>>)> {
         self.operator.get_edges()
     }
-    fn node_children(&self, node: &Arc<RwLock<LinkedGraphNode>>) -> Vec<Arc<RwLock<LinkedGraphNode>>> {
+    fn node_children(
+        &self,
+        node: &Arc<RwLock<LinkedGraphNode>>,
+    ) -> Vec<Arc<RwLock<LinkedGraphNode>>> {
         self.operator.node_children(node)
     }
     fn graphs_equal(&self, other: &dyn Graph) -> bool {
