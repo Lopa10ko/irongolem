@@ -1,0 +1,28 @@
+"golem":
+  - changed-files:
+      - any-glob-to-any-file:
+          - "irongolem/**"
+
+"rust-infra":
+  - changed-files:
+      - any-glob-to-any-file:
+          - "Cargo.toml"
+          - "Cargo.lock"
+
+"test":
+  - changed-files:
+      - any-glob-to-any-file:
+          - "irongolem-tests/**"
+          - "*test*"
+
+"ci":
+  - changed-files:
+      - any-glob-to-any-file:
+          - ".github/**"
+
+"documentation":
+  - changed-files:
+      - any-glob-to-any-file:
+          - "**/*.md"
+          - "**/*.rst"
+          - "docs/**"
