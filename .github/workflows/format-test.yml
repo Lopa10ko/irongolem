@@ -30,7 +30,7 @@ jobs:
         run: cargo fmt --all --check
 
       - name: Clippy
-        run: cargo clippy -p irongolem --all-targets -- -D warnings
+        run: cargo clippy -p irongolem -p test-support --all-targets -- -D warnings
 
       - name: Build
         run: cargo build --workspace --verbose
