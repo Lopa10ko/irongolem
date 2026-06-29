@@ -1,7 +1,6 @@
 use std::sync::{Arc, RwLock};
 
-use crate::golem::adapter::DirectAdapter;
-use crate::golem::dag::{GraphDelegate, LinkedGraphNode, NodeContent};
+use crate::golem::dag::{GraphDelegate, NodeContent};
 
 #[derive(Debug)]
 pub struct MockNode {

@@ -1,8 +1,9 @@
 use std::sync::{Arc, RwLock};
 
-use super::graph_node::GraphNode;
 use super::linked_graph_node::LinkedGraphNode;
 use super::reconnect::ReconnectType;
+
+pub type GraphEdge = (Arc<RwLock<LinkedGraphNode>>, Arc<RwLock<LinkedGraphNode>>);
 
 pub trait Graph {
     fn delete_node(&mut self, node: &Arc<RwLock<LinkedGraphNode>>, reconnect: ReconnectType);
@@ -28,7 +29,7 @@ pub trait Graph {
     fn root_nodes(&self) -> Vec<Arc<RwLock<LinkedGraphNode>>>;
     fn depth(&self) -> usize;
     fn length(&self) -> usize;
-    fn get_edges(&self) -> Vec<(Arc<RwLock<LinkedGraphNode>>, Arc<RwLock<LinkedGraphNode>>)>;
+    fn get_edges(&self) -> Vec<GraphEdge>;
     fn node_children(&self, node: &Arc<RwLock<LinkedGraphNode>>)
         -> Vec<Arc<RwLock<LinkedGraphNode>>>;
     fn graphs_equal(&self, other: &dyn Graph) -> bool;
@@ -86,7 +87,7 @@ impl Graph for LinkedGraph {
     fn length(&self) -> usize {
         self.nodes.len()
     }
-    fn get_edges(&self) -> Vec<(Arc<RwLock<LinkedGraphNode>>, Arc<RwLock<LinkedGraphNode>>)> {
+    fn get_edges(&self) -> Vec<GraphEdge> {
         Vec::new()
     }
     fn node_children(&self, _node: &Arc<RwLock<LinkedGraphNode>>) -> Vec<Arc<RwLock<LinkedGraphNode>>> {

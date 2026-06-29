@@ -1,6 +1,6 @@
 use std::sync::{Arc, RwLock};
 
-use super::linked_graph::{Graph, LinkedGraph};
+use super::linked_graph::{Graph, GraphEdge, LinkedGraph};
 use super::linked_graph_node::LinkedGraphNode;
 use super::reconnect::ReconnectType;
 
@@ -63,7 +63,7 @@ impl Graph for GraphDelegate {
     fn length(&self) -> usize {
         self.operator.length()
     }
-    fn get_edges(&self) -> Vec<(Arc<RwLock<LinkedGraphNode>>, Arc<RwLock<LinkedGraphNode>>)> {
+    fn get_edges(&self) -> Vec<GraphEdge> {
         self.operator.get_edges()
     }
     fn node_children(&self, node: &Arc<RwLock<LinkedGraphNode>>) -> Vec<Arc<RwLock<LinkedGraphNode>>> {
