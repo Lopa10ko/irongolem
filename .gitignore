@@ -23,3 +23,7 @@ target
 # Cursor
 .cursor/
 AGENTS.md
+docs/ARCHITECTURE.md
+docs/MODULE_MAP.md
+docs/RUST_LEARNING.md
+scripts/test-module.sh
