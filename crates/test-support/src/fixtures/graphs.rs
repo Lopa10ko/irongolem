@@ -56,13 +56,22 @@ pub fn graph_first() -> GraphDelegate {
 }
 
 pub fn graph_second() -> GraphDelegate {
-    let new_node = LinkedGraphNode::from_name("a");
-    for oper in ["b", "d"] {
-        link(&new_node, LinkedGraphNode::from_name(oper));
-    }
-    let graph = graph_first();
-    let _ = new_node;
-    graph
+    // graph_first with root_child_first's second parent (d) replaced by subtree a -> b, d
+    let node_c_first = LinkedGraphNode::from_name("c");
+    let node_b_under_new = LinkedGraphNode::from_name("b");
+    let node_d_under_new = LinkedGraphNode::from_name("d");
+    let replacement_subtree =
+        LinkedGraphNode::with_parents("a", vec![node_b_under_new, node_d_under_new]);
+    let root_child_first =
+        LinkedGraphNode::with_parents("a", vec![node_c_first, replacement_subtree]);
+
+    let node_c_second = LinkedGraphNode::from_name("c");
+    let node_d_second = LinkedGraphNode::from_name("d");
+    let root_child_second = LinkedGraphNode::with_parents("b", vec![node_c_second, node_d_second]);
+
+    let root_of_tree =
+        LinkedGraphNode::with_parents("a", vec![root_child_first, root_child_second]);
+    GraphDelegate::new(root_of_tree)
 }
 
 pub fn graph_third() -> GraphDelegate {
@@ -74,12 +83,12 @@ pub fn graph_third() -> GraphDelegate {
 }
 
 pub fn graph_fourth() -> GraphDelegate {
-    let graph = graph_third();
+    let mut graph = graph_third();
     let new_node = LinkedGraphNode::from_name("a");
     for _ in 0..2 {
         link(&new_node, LinkedGraphNode::from_name("b"));
     }
-    let _ = new_node;
+    graph.add_node(new_node);
     graph
 }
 
@@ -214,4 +223,82 @@ pub fn non_equality_cases() -> Vec<(GraphDelegate, GraphDelegate)> {
         (graph_first(), graph_third()),
         (graph_second(), graph_third()),
     ]
+}
+
+/// Layered graph fixture from `test_graph_operator.py` `graph` fixture.
+pub fn operator_test_graph() -> GraphDelegate {
+    let third_level_one = LinkedGraphNode::from_name("l3_n1");
+    let second_level_one = LinkedGraphNode::with_parents("l2_n1", vec![third_level_one]);
+    let second_level_two = LinkedGraphNode::from_name("l2_n2");
+    let first_level_one =
+        LinkedGraphNode::with_parents("l1_n1", vec![second_level_one, second_level_two]);
+    let root = LinkedGraphNode::with_parents("l0_n1", vec![first_level_one]);
+    GraphDelegate::new(root)
+}
+
+/// Node chain for `test_distance_to_primary_level`.
+pub fn get_nodes_chain() -> Vec<Arc<RwLock<LinkedGraphNode>>> {
+    let node_a_first = LinkedGraphNode::from_name("a");
+    let node_a_second = LinkedGraphNode::from_name("a");
+    let node_b =
+        LinkedGraphNode::with_parents("b", vec![node_a_first.clone(), node_a_second.clone()]);
+    let node_d = LinkedGraphNode::with_parents("d", vec![node_b.clone()]);
+    vec![node_d, node_b, node_a_second, node_a_first]
+}
+
+pub fn get_initial_graph() -> GraphDelegate {
+    let node_a_primary = LinkedGraphNode::from_name("a");
+    let node_b = LinkedGraphNode::with_parents("b", vec![node_a_primary.clone()]);
+    let node_c = LinkedGraphNode::with_parents("c", vec![node_a_primary.clone()]);
+    let node_c_second = LinkedGraphNode::with_parents("c", vec![node_a_primary]);
+    let node_d = LinkedGraphNode::with_parents("d", vec![node_c_second]);
+    let node_e = LinkedGraphNode::with_parents("e", vec![node_b, node_c]);
+    let node_e_root = LinkedGraphNode::with_parents("e", vec![node_d, node_e]);
+    GraphDelegate::new(node_e_root)
+}
+
+pub fn get_res_graph_test_first() -> GraphDelegate {
+    let node_a_primary = LinkedGraphNode::from_name("a");
+    let node_c_second = LinkedGraphNode::with_parents("c", vec![node_a_primary]);
+    let node_d = LinkedGraphNode::with_parents("d", vec![node_c_second]);
+    let node_e_root = LinkedGraphNode::with_parents("e", vec![node_d]);
+    GraphDelegate::new(node_e_root)
+}
+
+pub fn get_res_graph_test_second() -> GraphDelegate {
+    let node_a_primary = LinkedGraphNode::from_name("a");
+    let node_c = LinkedGraphNode::with_parents("c", vec![node_a_primary.clone()]);
+    let node_c_second = LinkedGraphNode::with_parents("c", vec![node_a_primary]);
+    let node_d = LinkedGraphNode::with_parents("d", vec![node_c_second]);
+    let node_e = LinkedGraphNode::with_parents("e", vec![node_c]);
+    let node_e_root = LinkedGraphNode::with_parents("e", vec![node_d, node_e]);
+    GraphDelegate::new(node_e_root)
+}
+
+pub fn get_res_graph_test_third() -> GraphDelegate {
+    let node_a_primary = LinkedGraphNode::from_name("a");
+    let node_b = LinkedGraphNode::with_parents("b", vec![node_a_primary.clone()]);
+    let node_c = LinkedGraphNode::with_parents("c", vec![node_a_primary]);
+    let node_e = LinkedGraphNode::with_parents("e", vec![node_b, node_c]);
+    let node_e_root = LinkedGraphNode::with_parents("e", vec![node_e]);
+    GraphDelegate::new(node_e_root)
+}
+
+pub fn graph_with_cycle() -> GraphDelegate {
+    simple_cycled_graph()
+}
+
+pub fn graph_with_isolated_nodes() -> GraphDelegate {
+    graph_ninth()
+}
+
+pub fn graph_with_cycled_node() -> GraphDelegate {
+    let node = LinkedGraphNode::from_name("a");
+    let self_ref = node.clone();
+    node.write().unwrap().nodes_from.push(self_ref);
+    GraphDelegate::new(node)
+}
+
+pub fn graph_with_isolated_components() -> GraphDelegate {
+    graph_ninth()
 }

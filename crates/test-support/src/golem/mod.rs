@@ -1,6 +1,6 @@
-pub mod adapter;
-pub mod dag;
-pub mod optimisers;
+pub use irongolem::golem::adapter;
+pub use irongolem::golem::dag;
+pub use irongolem::golem::optimisers;
 pub mod serializers;
 pub mod structural_analysis;
 pub mod utilities;
