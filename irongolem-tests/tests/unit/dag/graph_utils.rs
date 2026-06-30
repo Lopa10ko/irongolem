@@ -94,6 +94,28 @@ fn test_graph_has_cycle() {
 }
 
 #[test]
+fn test_graph_has_cycle_diamond_back_edge() {
+    // Regression: DFS must not walk parents of a popped stack frame (arena-branch bug).
+    let a = LinkedGraphNode::from_name("a");
+    let b = LinkedGraphNode::with_parents("b", vec![a.clone()]);
+    let c = LinkedGraphNode::with_parents("c", vec![a.clone()]);
+    let d = LinkedGraphNode::with_parents("d", vec![b.clone(), c.clone()]);
+    b.write().unwrap().nodes_from.push(d.clone());
+    let graph = irongolem::golem::dag::GraphDelegate::with_roots(vec![d]);
+    assert!(graph_has_cycle(&graph));
+}
+
+#[test]
+fn test_graph_has_cycle_disconnected_component() {
+    let a = LinkedGraphNode::from_name("a");
+    let b = LinkedGraphNode::with_parents("b", vec![a.clone()]);
+    let x = LinkedGraphNode::from_name("x");
+    let y = LinkedGraphNode::with_parents("y", vec![x.clone()]);
+    let graph = irongolem::golem::dag::GraphDelegate::with_roots(vec![b, y]);
+    assert!(!graph_has_cycle(&graph));
+}
+
+#[test]
 fn test_node_depth() {
     let cases: Vec<(fn() -> irongolem::golem::dag::GraphDelegate, &[&str], i32)> = vec![
         (simple_cycled_graph, &["c", "d", "e"], -1),

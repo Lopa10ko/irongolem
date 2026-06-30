@@ -68,7 +68,7 @@ fn simple_mutation_changes_all_nodes(
         parameters,
     } = get_mutation_params(None, None, 1.0);
     let new_graph = simple_mutation(
-        graph.clone(),
+        graph.deep_clone(),
         &requirements,
         &graph_gen_params,
         &parameters,

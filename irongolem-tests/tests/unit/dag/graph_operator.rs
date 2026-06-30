@@ -118,7 +118,7 @@ fn test_distance_to_same_graph_restored() {
 
 #[test]
 fn test_known_distances() {
-    use std::collections::HashMap;
+    use std::collections::BTreeMap;
 
     use irongolem::golem::dag::{
         get_distance_between, GraphDelegate, LinkedGraphNode, NodeContent,
@@ -128,7 +128,7 @@ fn test_known_distances() {
     let node_a = LinkedGraphNode::from_name("a");
     let node_b = LinkedGraphNode::from_name("b");
     let node_c = LinkedGraphNode::with_parents("c", vec![node_a.clone()]);
-    let mut params = HashMap::new();
+    let mut params = BTreeMap::new();
     params.insert("alpha".to_string(), json!(4));
     let node_c_alt = LinkedGraphNode::new(NodeContent::with_params("c", params));
     node_c_alt.write().unwrap().nodes_from.push(node_a.clone());
