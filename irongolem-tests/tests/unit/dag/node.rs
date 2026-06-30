@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
+use irongolem::golem::dag::{GraphNode, LinkedGraphNode, NodeContent};
 use serde_json::json;
-use test_support::golem::dag::{GraphNode, LinkedGraphNode, NodeContent};
 
 #[test]
 fn test_node_description() {

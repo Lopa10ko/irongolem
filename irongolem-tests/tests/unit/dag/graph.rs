@@ -1,7 +1,5 @@
-use test_support::fixtures::find_same_node;
-use test_support::golem::dag::{
-    Graph, GraphDelegate, GraphImpl, GraphNode, LinkedGraph, LinkedGraphNode, NodeContent,
-    ReconnectType,
+use irongolem::golem::dag::{
+    Graph, GraphImpl, GraphNode, LinkedGraphNode, NodeContent, ReconnectType,
 };
 
 #[test]

@@ -1,100 +1,114 @@
 //! graph_utils
 
+use std::sync::Arc;
+
+use irongolem::golem::dag::{
+    distance_to_primary_level, distance_to_root_level, get_nodes_by_name, graph_has_cycle,
+    node_depth, nodes_from_layer, ordered_subnodes_hierarchy, Graph, LinkedGraphNode,
+};
+use test_support::fixtures::{
+    branched_cycled_graph, get_nodes_chain, graph_fifth, graph_first, graph_second, graph_third,
+    graph_with_multi_roots_first, joined_branches_graph, operator_test_graph, simple_cycled_graph,
+};
+
+fn ptr_eq(
+    a: &Arc<std::sync::RwLock<LinkedGraphNode>>,
+    b: &Arc<std::sync::RwLock<LinkedGraphNode>>,
+) -> bool {
+    Arc::ptr_eq(a, b)
+}
+
 #[test]
 fn test_distance_to_primary_level() {
-    // def test_distance_to_primary_level():
-    //     # given
-    //     root = get_nodes()[0]
-    //
-    //     distance = distance_to_primary_level(root)
-    //
-    //     assert distance == 2
-    assert!(false);
+    let nodes = get_nodes_chain();
+    let root = &nodes[0];
+    let distance = distance_to_primary_level(root);
+    assert_eq!(distance, 2);
 }
 
 #[test]
 fn test_nodes_from_height() {
-    // def test_nodes_from_height():
-    //     graph = graph_first()
-    //     found_nodes = nodes_from_layer(graph, 1)
-    //     true_nodes = [node for node in graph.root_node.nodes_from]
-    //     assert all([node_model == found_node for node_model, found_node in
-    //                 zip(true_nodes, found_nodes)])
-    assert!(false);
+    let graph = graph_first();
+    let found_nodes = nodes_from_layer(&graph, 1);
+    let root = graph.root_node().unwrap();
+    let true_nodes = root.read().unwrap().nodes_from.clone();
+    assert_eq!(found_nodes.len(), true_nodes.len());
+    for (node_model, found_node) in true_nodes.iter().zip(found_nodes.iter()) {
+        assert!(ptr_eq(node_model, found_node));
+    }
 }
 
 #[test]
 fn test_distance_to_root_level() {
-    // def test_distance_to_root_level(graph):
-    //     # given
-    //     selected_node = graph.nodes[2]
-    //
-    //     # when
-    //     height = distance_to_root_level(graph, selected_node)
-    //
-    //     # then
-    //     assert height == 2
-    assert!(false);
+    let graph = operator_test_graph();
+    let selected_node = graph.nodes()[2].clone();
+    let height = distance_to_root_level(&graph, &selected_node);
+    assert_eq!(height, 2);
 }
 
 #[test]
 fn test_nodes_from_layer() {
-    // def test_nodes_from_layer(graph):
-    //     # given
-    //     desired_layer = 2
-    //
-    //     # when
-    //     nodes_from_desired_layer = nodes_from_layer(graph, desired_layer)
-    //
-    //     # then
-    //     assert len(nodes_from_desired_layer) == 2
-    assert!(false);
+    let graph = operator_test_graph();
+    let desired_layer = 2;
+    let nodes_from_desired_layer = nodes_from_layer(&graph, desired_layer);
+    assert_eq!(nodes_from_desired_layer.len(), 2);
 }
 
 #[test]
 fn test_ordered_subnodes_hierarchy() {
-    // def test_ordered_subnodes_hierarchy():
-    //     first_node = LinkedGraphNode('a')
-    //     second_node = LinkedGraphNode('b')
-    //     third_node = LinkedGraphNode('c', nodes_from=[first_node, second_node])
-    //     root = LinkedGraphNode('d', nodes_from=[third_node])
-    //
-    //     ordered_nodes = ordered_subnodes_hierarchy(root)
-    //
-    //     assert len(ordered_nodes) == 4
-    //     assert ordered_nodes == [root, third_node, first_node, second_node]
-    assert!(false);
+    let first_node = LinkedGraphNode::from_name("a");
+    let second_node = LinkedGraphNode::from_name("b");
+    let third_node =
+        LinkedGraphNode::with_parents("c", vec![first_node.clone(), second_node.clone()]);
+    let root = LinkedGraphNode::with_parents("d", vec![third_node.clone()]);
+
+    let ordered_nodes = ordered_subnodes_hierarchy(&root).unwrap();
+    assert_eq!(ordered_nodes.len(), 4);
+    assert!(ptr_eq(&ordered_nodes[0], &root));
+    assert!(ptr_eq(&ordered_nodes[1], &third_node));
+    assert!(ptr_eq(&ordered_nodes[2], &first_node));
+    assert!(ptr_eq(&ordered_nodes[3], &second_node));
 }
 
 #[test]
 fn test_ordered_subnodes_cycle() {
-    // def test_ordered_subnodes_cycle():
-    //     cycle_node = LinkedGraphNode('knn')
-    //     second_node = LinkedGraphNode('knn')
-    //     third_node = LinkedGraphNode('lda', nodes_from=[cycle_node, second_node])
-    //     root = LinkedGraphNode('logit', nodes_from=[third_node])
-    //     cycle_node.nodes_from = [root]
-    //
-    //     with pytest.raises(ValueError, match='cycle'):
-    //         ordered_subnodes_hierarchy(root)
-    assert!(false);
+    let cycle_node = LinkedGraphNode::from_name("knn");
+    let second_node = LinkedGraphNode::from_name("knn");
+    let third_node = LinkedGraphNode::with_parents("lda", vec![cycle_node.clone(), second_node]);
+    let root = LinkedGraphNode::with_parents("logit", vec![third_node]);
+    cycle_node.write().unwrap().nodes_from.push(root.clone());
+
+    let result = ordered_subnodes_hierarchy(&root);
+    assert!(result.is_err());
+    assert!(result.unwrap_err().contains("cycle"));
 }
 
 #[test]
 fn test_graph_has_cycle() {
-    // def test_graph_has_cycle():
-    //     for cycled_graph in [simple_cycled_graph(), branched_cycled_graph()]:
-    //         assert graph_has_cycle(cycled_graph)
-    //     for not_cycled_graph in [graph_first(), graph_second(), graph_third()]:
-    //         assert not graph_has_cycle(not_cycled_graph)
-    assert!(false);
+    for cycled_graph in [simple_cycled_graph(), branched_cycled_graph()] {
+        assert!(graph_has_cycle(&cycled_graph));
+    }
+    for not_cycled_graph in [graph_first(), graph_second(), graph_third()] {
+        assert!(!graph_has_cycle(&not_cycled_graph));
+    }
 }
 
 #[test]
 fn test_node_depth() {
-    // def test_node_depth(graph, nodes_names, correct_depths):
-    //     nodes = [graph.get_nodes_by_name(name)[0] for name in nodes_names]
-    //     depths = node_depth(nodes)
-    //     assert depths == correct_depths
-    assert!(false);
+    let cases: Vec<(fn() -> irongolem::golem::dag::GraphDelegate, &[&str], i32)> = vec![
+        (simple_cycled_graph, &["c", "d", "e"], -1),
+        (graph_fifth, &["b", "c", "d"], 4),
+        (graph_with_multi_roots_first, &["16", "13", "14"], 3),
+        (joined_branches_graph, &["d", "f", "c"], 5),
+    ];
+
+    for (graph_fn, names, expected) in cases {
+        let graph = graph_fn();
+        let nodes: Vec<_> = names
+            .iter()
+            .map(|name| get_nodes_by_name(&graph, name)[0].clone())
+            .collect();
+        let depths = node_depth(&nodes);
+        assert_eq!(depths, expected, "failed for graph {:?}", names);
+    }
 }

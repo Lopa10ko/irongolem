@@ -1,21 +1,19 @@
 //! graph_comparison
 
+use test_support::fixtures::{equality_cases, non_equality_cases};
+
 #[test]
 fn test_equality_cases() {
-    // def test_equality_cases(graph_fixture, request):
-    //     list_graph_pairs = request.getfixturevalue(graph_fixture)
-    //     for pair in list_graph_pairs:
-    //         assert pair[0] == pair[1]
-    //         assert pair[1] == pair[0]
-    assert!(false);
+    for (left, right) in equality_cases() {
+        assert_eq!(left, right);
+        assert_eq!(right, left);
+    }
 }
 
 #[test]
 fn test_non_equality_cases() {
-    // def test_non_equality_cases(graph_fixture, request):
-    //     list_graph_pairs = request.getfixturevalue(graph_fixture)
-    //     for pair in list_graph_pairs:
-    //         assert not pair[0] == pair[1]
-    //         assert not pair[1] == pair[0]
-    assert!(false);
+    for (left, right) in non_equality_cases() {
+        assert_ne!(left, right);
+        assert_ne!(right, left);
+    }
 }

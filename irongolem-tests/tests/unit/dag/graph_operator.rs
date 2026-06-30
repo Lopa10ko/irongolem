@@ -1,203 +1,208 @@
 //! graph_operator
 
-#[test]
-fn test_graph_operator_init() {
-    // def test_graph_operator_init(graph):
-    //     assert type(graph.operator) is LinkedGraph
-    assert!(false);
+use std::sync::Arc;
+
+use irongolem::golem::dag::{Graph, LinkedGraph, LinkedGraphNode};
+use test_support::fixtures::{
+    get_initial_graph, get_res_graph_test_first, get_res_graph_test_second,
+    get_res_graph_test_third, operator_test_graph,
+};
+
+fn edges_equal(
+    left: &[(
+        Arc<std::sync::RwLock<LinkedGraphNode>>,
+        Arc<std::sync::RwLock<LinkedGraphNode>>,
+    )],
+    right: &[(
+        Arc<std::sync::RwLock<LinkedGraphNode>>,
+        Arc<std::sync::RwLock<LinkedGraphNode>>,
+    )],
+) -> bool {
+    left.len() == right.len()
+        && left
+            .iter()
+            .zip(right.iter())
+            .all(|((lp, lc), (rp, rc))| Arc::ptr_eq(lp, rp) && Arc::ptr_eq(lc, rc))
 }
 
-#[test]
-fn test_actualise_old_node_children() {
-    // def test_actualise_old_node_children(graph):
-    //     # given
-    //     selected_node = graph.nodes[2]
-    //     new_node = LinkedGraphNode('new_node')
-    //
-    //     # when
-    //     graph.operator.actualise_old_node_children(old_node=selected_node,
-    //                                                new_node=new_node)
-    //     updated_parent = graph.nodes[1]
-    //
-    //     # then
-    //     assert new_node in updated_parent.nodes_from
-    assert!(false);
-}
-
-#[test]
-fn test_sort_nodes() {
-    // def test_sort_nodes(graph):
-    //     # given
-    //     selected_node = graph.nodes[2]
-    //     original_length = graph.length
-    //     new_node = LinkedGraphNode('new_n1')
-    //     new_subroot = LinkedGraphNode('new_n2', nodes_from=[new_node])
-    //
-    //     # when
-    //     graph.add_node(new_subroot)
-    //     graph.connect_nodes(new_subroot, selected_node)
-    //     graph.operator.sort_nodes()
-    //
-    //     # then
-    //     assert graph.length == original_length + 2
-    //     assert graph.nodes[4] is new_subroot
-    //     assert graph.nodes[5] is new_node
-    assert!(false);
-}
-
-#[test]
-fn test_node_children() {
-    // def test_node_children(graph):
-    //     # given
-    //     selected_node = graph.nodes[2]
-    //
-    //     # when
-    //     children = graph.node_children(selected_node)
-    //
-    //     # then
-    //     assert len(children) == 1
-    //     assert children[0] is graph.nodes[1]
-    assert!(false);
-}
-
-#[test]
-fn test_distance_to_same_graph_restored() {
-    // def test_distance_to_same_graph_restored(graph):
-    //     # given
-    //     adapter = DirectAdapter()
-    //     opt_graph = adapter.adapt(graph)
-    //
-    //     # when
-    //     distance = get_distance_between(graph_1=graph, graph_2=adapter.restore(opt_graph))
-    //
-    //     # then
-    //     assert distance == 0
-    assert!(false);
-}
-
-#[test]
-fn test_known_distances() {
-    // def test_known_distances():
-    //     node_a = LinkedGraphNode('a')
-    //     node_b = LinkedGraphNode('b')
-    //     node_c = LinkedGraphNode('c', nodes_from=[node_a])
-    //     node_c_with_alt_params = LinkedGraphNode(content={'name': 'c', 'params': {'alpha': 4}}, nodes_from=[node_a])
-    //     node_d = LinkedGraphNode('d', nodes_from=[node_a])
-    //     graph_a = GraphDelegate(node_a)  # a
-    //     graph_b = GraphDelegate(node_b)  # b
-    //     graph_c = GraphDelegate(node_c)  # a -> c
-    //     graph_d = GraphDelegate(node_d)  # a -> d
-    //     graph_c_with_alt_params = GraphDelegate(node_c_with_alt_params)  # a -> c_alt_params
-    //
-    //     assert get_distance_between(graph_1=graph_c,
-    //                                 graph_2=graph_c) == 0  # the same graph
-    //     assert get_distance_between(graph_1=graph_c,
-    //                                 graph_2=graph_a) == 2  # changes: 1 node (operation) + 1 edge
-    //     assert get_distance_between(graph_1=graph_c,
-    //                                 graph_2=graph_d) == 1  # changes: 1 node (operation)
-    //     assert get_distance_between(graph_1=graph_c,
-    //                                 graph_2=graph_c_with_alt_params) == 1  # changes: 1 node (params)
-    //     assert get_distance_between(graph_1=graph_c,
-    //                                 graph_2=graph_b) == 3  # changes: 2 nodes (operations) + 1 edge
-    //     assert get_distance_between(graph_1=graph_c,
-    //                                 graph_2=graph_c_with_alt_params) == 1
-    assert!(false);
-}
-
-#[test]
-fn test_disconnect_nodes_method_first() {
-    // def test_disconnect_nodes_method_first():
-    //     graph = get_initial_graph()
-    //
-    //     res_graph = get_res_graph_test_first()
-    //
-    //     node_e = graph.nodes[4]
-    //     node_e_root = graph.nodes[0]
-    //
-    //     graph.disconnect_nodes(node_e, node_e_root, clean_up_leftovers=True)
-    //
-    //     assert res_graph == graph
-    assert!(false);
-}
-
-#[test]
-fn test_disconnect_nodes_method_second() {
-    // def test_disconnect_nodes_method_second():
-    //     graph = get_initial_graph()
-    //
-    //     res_graph = get_res_graph_test_second()
-    //
-    //     node_b = graph.nodes[5]
-    //     node_e = graph.nodes[4]
-    //
-    //     graph.disconnect_nodes(node_b, node_e, clean_up_leftovers=True)
-    //
-    //     assert res_graph == graph
-    assert!(false);
-}
-
-#[test]
-fn test_disconnect_nodes_method_third() {
-    // def test_disconnect_nodes_method_third():
-    //     graph = get_initial_graph()
-    //
-    //     res_graph = get_res_graph_test_third()
-    //
-    //     node_d = graph.nodes[1]
-    //     root_node_e = graph.nodes[0]
-    //
-    //     graph.disconnect_nodes(node_d, root_node_e, clean_up_leftovers=True)
-    //
-    //     assert res_graph == graph
-    assert!(false);
-}
-
-#[test]
-fn test_disconnect_nodes_method_fourth() {
-    // def test_disconnect_nodes_method_fourth():
-    //     graph = get_initial_graph()
-    //
-    //     # Try to disconnect nodes between which there is no edge
-    //     res_graph = deepcopy(graph)
-    //
-    //     node_c = res_graph.nodes[2]
-    //     root_node_e = res_graph.nodes[0]
-    //
-    //     res_graph.disconnect_nodes(node_c, root_node_e, clean_up_leftovers=True)
-    //     assert res_graph == graph
-    assert!(false);
-}
-
-#[test]
-fn test_disconnect_nodes_method_fifth() {
-    // def test_disconnect_nodes_method_fifth():
-    //     graph = get_initial_graph()
-    //
-    //     # Try to disconnect nodes that are not in this graph
-    //     res_graph = deepcopy(graph)
-    //
-    //     node_k = LinkedGraphNode('k')
-    //     node_m = LinkedGraphNode('m', nodes_from=[node_k])
-    //
-    //     res_graph.disconnect_nodes(node_k, node_m, clean_up_leftovers=True)
-    //     assert res_graph == graph
-    assert!(false);
+fn parent_contains(
+    node: &Arc<std::sync::RwLock<LinkedGraphNode>>,
+    parent: &Arc<std::sync::RwLock<LinkedGraphNode>>,
+) -> bool {
+    node.read()
+        .unwrap()
+        .nodes_from
+        .iter()
+        .any(|p| Arc::ptr_eq(p, parent))
 }
 
 #[test]
 fn test_get_edges() {
-    // def test_get_edges(graph):
-    //     print(graph.nodes)
-    //
-    //     l3_n1 = graph.nodes[3]
-    //     l2_n1 = graph.nodes[2]
-    //     l2_n2 = graph.nodes[4]
-    //     l1_n1 = graph.nodes[1]
-    //     l0_n1 = graph.nodes[0]
-    //
-    //     res_edges = [(l1_n1, l0_n1), (l2_n1, l1_n1), (l2_n2, l1_n1), (l3_n1, l2_n1)]
-    //
-    //     edges = graph.get_edges()
-    //     assert res_edges == edges
-    assert!(false);
+    let graph = operator_test_graph();
+    let nodes = graph.nodes();
+
+    let l3_n1 = nodes[3].clone();
+    let l2_n1 = nodes[2].clone();
+    let l2_n2 = nodes[4].clone();
+    let l1_n1 = nodes[1].clone();
+    let l0_n1 = nodes[0].clone();
+
+    let res_edges = vec![
+        (l1_n1.clone(), l0_n1.clone()),
+        (l2_n1.clone(), l1_n1.clone()),
+        (l2_n2.clone(), l1_n1.clone()),
+        (l3_n1.clone(), l2_n1.clone()),
+    ];
+
+    let edges = graph.get_edges();
+    assert!(edges_equal(&res_edges, &edges));
+}
+
+#[test]
+fn test_graph_operator_init() {
+    let graph = operator_test_graph();
+    let _: &LinkedGraph = graph.operator();
+}
+
+#[test]
+fn test_actualise_old_node_children() {
+    let mut graph = operator_test_graph();
+    let selected_node = graph.nodes()[2].clone();
+    let new_node = LinkedGraphNode::from_name("new_node");
+
+    graph
+        .operator_mut()
+        .actualise_old_node_children(&selected_node, &new_node);
+
+    let updated_parent = graph.nodes()[1].clone();
+    assert!(parent_contains(&updated_parent, &new_node));
+}
+
+#[test]
+fn test_sort_nodes() {
+    let mut graph = operator_test_graph();
+    let selected_node = graph.nodes()[2].clone();
+    let original_length = graph.length();
+    let new_node = LinkedGraphNode::from_name("new_n1");
+    let new_subroot = LinkedGraphNode::with_parents("new_n2", vec![new_node.clone()]);
+
+    graph.add_node(new_subroot.clone());
+    graph.connect_nodes(&new_subroot, &selected_node);
+    graph.operator_mut().sort_nodes();
+
+    assert_eq!(graph.length(), original_length + 2);
+    assert!(Arc::ptr_eq(&graph.nodes()[4], &new_subroot));
+    assert!(Arc::ptr_eq(&graph.nodes()[5], &new_node));
+}
+
+#[test]
+fn test_node_children() {
+    let graph = operator_test_graph();
+    let selected_node = graph.nodes()[2].clone();
+    let children = graph.node_children(&selected_node);
+    assert_eq!(children.len(), 1);
+    assert!(Arc::ptr_eq(&children[0], &graph.nodes()[1]));
+}
+
+#[test]
+fn test_distance_to_same_graph_restored() {
+    use irongolem::golem::adapter::DirectAdapter;
+    use irongolem::golem::dag::get_distance_between;
+
+    let graph = operator_test_graph();
+    let adapter = DirectAdapter::default();
+    let opt_graph = adapter.adapt(graph.clone());
+    let distance = get_distance_between(&graph, &adapter.restore(opt_graph));
+    assert_eq!(distance, 0);
+}
+
+#[test]
+fn test_known_distances() {
+    use std::collections::HashMap;
+
+    use irongolem::golem::dag::{
+        get_distance_between, GraphDelegate, LinkedGraphNode, NodeContent,
+    };
+    use serde_json::json;
+
+    let node_a = LinkedGraphNode::from_name("a");
+    let node_b = LinkedGraphNode::from_name("b");
+    let node_c = LinkedGraphNode::with_parents("c", vec![node_a.clone()]);
+    let mut params = HashMap::new();
+    params.insert("alpha".to_string(), json!(4));
+    let node_c_alt = LinkedGraphNode::new(NodeContent::with_params("c", params));
+    node_c_alt.write().unwrap().nodes_from.push(node_a.clone());
+    let node_d = LinkedGraphNode::with_parents("d", vec![node_a.clone()]);
+
+    let graph_a = GraphDelegate::new(node_a);
+    let graph_b = GraphDelegate::new(node_b);
+    let graph_c = GraphDelegate::new(node_c);
+    let graph_d = GraphDelegate::new(node_d);
+    let graph_c_alt = GraphDelegate::new(node_c_alt);
+
+    assert_eq!(get_distance_between(&graph_c, &graph_c), 0);
+    assert_eq!(get_distance_between(&graph_c, &graph_a), 2);
+    assert_eq!(get_distance_between(&graph_c, &graph_d), 1);
+    assert_eq!(get_distance_between(&graph_c, &graph_c_alt), 1);
+    assert_eq!(get_distance_between(&graph_c, &graph_b), 3);
+}
+
+#[test]
+fn test_disconnect_nodes_method_first() {
+    let mut graph = get_initial_graph();
+    let res_graph = get_res_graph_test_first();
+
+    let node_e = graph.nodes()[4].clone();
+    let node_e_root = graph.nodes()[0].clone();
+
+    graph.disconnect_nodes(&node_e, &node_e_root, true);
+    assert_eq!(res_graph, graph);
+}
+
+#[test]
+fn test_disconnect_nodes_method_second() {
+    let mut graph = get_initial_graph();
+    let res_graph = get_res_graph_test_second();
+
+    let node_b = graph.nodes()[5].clone();
+    let node_e = graph.nodes()[4].clone();
+
+    graph.disconnect_nodes(&node_b, &node_e, true);
+    assert_eq!(res_graph, graph);
+}
+
+#[test]
+fn test_disconnect_nodes_method_third() {
+    let mut graph = get_initial_graph();
+    let res_graph = get_res_graph_test_third();
+
+    let node_d = graph.nodes()[1].clone();
+    let root_node_e = graph.nodes()[0].clone();
+
+    graph.disconnect_nodes(&node_d, &root_node_e, true);
+    assert_eq!(res_graph, graph);
+}
+
+#[test]
+fn test_disconnect_nodes_method_fourth() {
+    let graph = get_initial_graph();
+    let mut res_graph = graph.clone();
+
+    let node_c = res_graph.nodes()[2].clone();
+    let root_node_e = res_graph.nodes()[0].clone();
+
+    res_graph.disconnect_nodes(&node_c, &root_node_e, true);
+    assert_eq!(res_graph, graph);
+}
+
+#[test]
+fn test_disconnect_nodes_method_fifth() {
+    let graph = get_initial_graph();
+    let mut res_graph = graph.clone();
+
+    let node_k = LinkedGraphNode::from_name("k");
+    let node_m = LinkedGraphNode::with_parents("m", vec![node_k.clone()]);
+
+    res_graph.disconnect_nodes(&node_k, &node_m, true);
+    assert_eq!(res_graph, graph);
 }
