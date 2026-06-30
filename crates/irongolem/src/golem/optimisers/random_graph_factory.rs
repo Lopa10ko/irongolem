@@ -1,8 +1,6 @@
 use std::sync::{Arc, RwLock};
 
-use crate::golem::dag::{
-    distance_to_root_level, Graph, GraphDelegate, LinkedGraphNode,
-};
+use crate::golem::dag::{distance_to_root_level, Graph, GraphDelegate, LinkedGraphNode};
 use crate::golem::optimisers::genetic::constants::MAX_GRAPH_GEN_ATTEMPTS;
 use crate::golem::optimisers::genetic::params::{GraphRequirements, OptNodeFactory};
 use crate::golem::optimisers::genetic::rng::GeneticRng;

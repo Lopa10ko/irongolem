@@ -53,8 +53,7 @@ fn test_crossover_reproducibility() {
     for crossover_type in CROSSOVER_TYPES {
         for seed in SEEDS {
             let run_with_seed = |seed: u64| {
-                let mut parameters =
-                    GPAlgorithmParameters::default().with_random_seed(seed);
+                let mut parameters = GPAlgorithmParameters::default().with_random_seed(seed);
                 parameters.crossover_types = vec![crossover_type];
                 let crossover = Crossover::new(
                     parameters,

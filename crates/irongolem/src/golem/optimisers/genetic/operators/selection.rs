@@ -148,7 +148,8 @@ pub fn spea2_selection(individuals: PopulationT, pop_size: usize, rng: &GeneticR
                     }
                     distances[j] = dist;
                 }
-                let kth = randomized_select(rng, &mut distances.clone(), 0, inds_len - 1, inds_len_sqrt);
+                let kth =
+                    randomized_select(rng, &mut distances.clone(), 0, inds_len - 1, inds_len_sqrt);
                 let density = 1.0 / (kth + 2.0);
                 fits[i] += density;
             }
@@ -246,13 +247,7 @@ fn trim_spea2_archive(
     }
 }
 
-fn randomized_select(
-    rng: &GeneticRng,
-    array: &mut [f64],
-    begin: usize,
-    end: usize,
-    i: f64,
-) -> f64 {
+fn randomized_select(rng: &GeneticRng, array: &mut [f64], begin: usize, end: usize, i: f64) -> f64 {
     if begin == end {
         return array[begin];
     }

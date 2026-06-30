@@ -284,8 +284,11 @@ pub fn single_add_mutation(
 
     let original = graph.deep_clone();
     let factory = &graph_gen_params.node_factory;
-    let mut strategies: Vec<fn(GraphDelegate, &OptNodeFactory, &GeneticRng) -> GraphDelegate> =
-        vec![add_as_child, add_separate_parent_node, add_intermediate_node];
+    let mut strategies: Vec<fn(GraphDelegate, &OptNodeFactory, &GeneticRng) -> GraphDelegate> = vec![
+        add_as_child,
+        add_separate_parent_node,
+        add_intermediate_node,
+    ];
     rng.shuffle(&mut strategies);
 
     for strategy in strategies {
@@ -333,7 +336,10 @@ pub fn single_drop_mutation(
         let Some(node_to_del) = rng.random_choice(&nodes) else {
             break;
         };
-        match graph_gen_params.advisor.can_be_removed(&node_to_del, &graph) {
+        match graph_gen_params
+            .advisor
+            .can_be_removed(&node_to_del, &graph)
+        {
             RemoveType::WithParents | RemoveType::WithDirectChildren => {
                 graph.delete_subtree(&node_to_del);
                 break;

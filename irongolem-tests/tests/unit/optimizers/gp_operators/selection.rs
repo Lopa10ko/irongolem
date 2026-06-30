@@ -106,10 +106,10 @@ fn test_spea2_returns_pop_size() {
 
 #[test]
 fn test_spea2_prefers_non_dominated() {
+    use irongolem::golem::dag::{GraphDelegate, LinkedGraphNode};
     use irongolem::golem::optimisers::fitness::{Fitness, MultiObjFitness};
     use irongolem::golem::optimisers::genetic::operators::selection::spea2_selection;
     use irongolem::golem::optimisers::history::Individual;
-    use irongolem::golem::dag::{GraphDelegate, LinkedGraphNode};
     use std::sync::Arc;
 
     let dominated = Individual::with_fitness(
@@ -144,10 +144,10 @@ fn test_spea2_prefers_non_dominated() {
 
 #[test]
 fn test_spea2_archive_trimming() {
+    use irongolem::golem::dag::{GraphDelegate, LinkedGraphNode};
     use irongolem::golem::optimisers::fitness::{Fitness, MultiObjFitness};
     use irongolem::golem::optimisers::genetic::operators::selection::spea2_selection;
     use irongolem::golem::optimisers::history::Individual;
-    use irongolem::golem::dag::{GraphDelegate, LinkedGraphNode};
     use std::sync::Arc;
 
     let make = |name: &str, f0: f64, f1: f64| {

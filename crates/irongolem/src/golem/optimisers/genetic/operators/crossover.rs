@@ -145,8 +145,8 @@ pub fn subtree_crossover(
     } else {
         0
     };
-    let random_layer_in_graph_second = min_second_layer
-        + rng.gen_range(0..depth_2.saturating_sub(min_second_layer).max(1));
+    let random_layer_in_graph_second =
+        min_second_layer + rng.gen_range(0..depth_2.saturating_sub(min_second_layer).max(1));
 
     let layer_first_nodes = nodes_from_layer(graph_1, random_layer_in_graph_first);
     let layer_second_nodes = nodes_from_layer(graph_2, random_layer_in_graph_second);
@@ -175,7 +175,8 @@ pub fn one_point_crossover(
     rng: &GeneticRng,
 ) {
     let pairs_of_nodes = equivalent_subtree(graph_first, graph_second, false);
-    if let Some((node_from_graph_first, node_from_graph_second)) = rng.random_choice(&pairs_of_nodes)
+    if let Some((node_from_graph_first, node_from_graph_second)) =
+        rng.random_choice(&pairs_of_nodes)
     {
         let layer_in_graph_first =
             graph_first.depth() - node_depth(std::slice::from_ref(&node_from_graph_first)) as usize;
@@ -434,10 +435,7 @@ pub fn subgraph_crossover(
     );
 }
 
-fn get_subgraphs(
-    graph: &mut GraphDelegate,
-    rng: &GeneticRng,
-) -> (Vec<NodeList>, HashSet<usize>) {
+fn get_subgraphs(graph: &mut GraphDelegate, rng: &GeneticRng) -> (Vec<NodeList>, HashSet<usize>) {
     let edges = graph.get_edges();
     if edges.is_empty() {
         let nodes = graph.nodes();

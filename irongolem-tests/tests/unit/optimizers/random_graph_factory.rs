@@ -1,8 +1,8 @@
 //! random_graph_factory
 
+use irongolem::golem::dag::Graph;
 use irongolem::golem::optimisers::genetic::params::{GraphGenerationParams, GraphRequirements};
 use irongolem::golem::optimisers::genetic::rng::GeneticRng;
-use irongolem::golem::dag::Graph;
 
 #[test]
 fn test_gp_composer_random_graph_generation_looping() {
@@ -18,8 +18,8 @@ fn test_gp_composer_random_graph_generation_looping() {
         max_arity: 4,
         ..Default::default()
     };
-    let graph_gen_params = GraphGenerationParams::new(available_node_types.clone())
-        .with_rng(GeneticRng::seeded(42));
+    let graph_gen_params =
+        GraphGenerationParams::new(available_node_types.clone()).with_rng(GeneticRng::seeded(42));
     let factory = graph_gen_params.random_graph_factory.clone();
 
     let graphs: Vec<_> = (0..20)

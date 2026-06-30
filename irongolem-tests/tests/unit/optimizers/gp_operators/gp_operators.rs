@@ -4,10 +4,10 @@ use irongolem::golem::adapter::DirectAdapter;
 use irongolem::golem::dag::{nodes_from_layer, Graph};
 use irongolem::golem::optimisers::fitness::{Fitness, MultiObjFitness};
 use irongolem::golem::optimisers::genetic::constants::MIN_POP_SIZE;
+use irongolem::golem::optimisers::genetic::rng::GeneticRng;
 use irongolem::golem::optimisers::genetic::{
     equivalent_subtree, filter_duplicates, get_structure_unique_population, replace_subtrees,
 };
-use irongolem::golem::optimisers::genetic::rng::GeneticRng;
 use irongolem::golem::optimisers::history::{Individual, ParetoFront};
 use test_support::fixtures::{
     get_graph_with_operation, graph_first, graph_fourth, graph_second, graph_third,

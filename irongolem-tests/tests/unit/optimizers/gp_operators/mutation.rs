@@ -281,13 +281,8 @@ fn test_replace_mutation() {
         graph_gen_params,
         parameters,
     } = get_mutation_params(None, None, 1.0);
-    let new_graph = single_change_mutation(
-        graph,
-        &requirements,
-        &graph_gen_params,
-        &parameters,
-        &rng,
-    );
+    let new_graph =
+        single_change_mutation(graph, &requirements, &graph_gen_params, &parameters, &rng);
     for node in new_graph.nodes() {
         let name = node.read().unwrap().content.name.clone();
         assert!(AVAILABLE_NODE_TYPES.contains(&name.as_str()));
