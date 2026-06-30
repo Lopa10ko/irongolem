@@ -292,7 +292,9 @@ pub fn exchange_parents_one_crossover(
     let node_from_first_graph =
         find_nodes_in_other_graph(std::slice::from_ref(&selected_node), graph_first)[0].clone();
 
-    node_from_first_graph.write().unwrap().nodes_from.clear();
+    for parent in &parents {
+        graph_first.disconnect_nodes(parent, &node_from_first_graph, false);
+    }
     let old_edges1: HashSet<(usize, usize)> = graph_first
         .get_edges()
         .iter()
@@ -343,8 +345,12 @@ pub fn exchange_parents_both_crossover(
         find_nodes_in_other_graph(&parents1, graph_second)
     };
 
-    selected_node1.write().unwrap().nodes_from.clear();
-    selected_node2.write().unwrap().nodes_from.clear();
+    for parent in &parents1 {
+        graph_first.disconnect_nodes(parent, &selected_node1, false);
+    }
+    for parent in &parents2 {
+        graph_second.disconnect_nodes(parent, &selected_node2, false);
+    }
 
     let old_edges1: HashSet<(usize, usize)> = graph_first
         .get_edges()

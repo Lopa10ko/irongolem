@@ -16,6 +16,7 @@ pub use graph_utils::{
     ordered_subnodes_hierarchy,
 };
 pub use linked_graph::LinkedGraph as GraphImpl;
+pub use linked_graph::add_detached;
 pub use linked_graph::{clone_subtree, get_distance_between, Graph, LinkedGraph};
 pub use linked_graph_node::{LinkedGraphNode, NodeContent};
 pub use reconnect::ReconnectType;

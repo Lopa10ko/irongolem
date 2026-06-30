@@ -4,10 +4,14 @@ use std::sync::{Arc, RwLock};
 use super::convert::{graph_edit_distance, graph_structure_as_digraph};
 use super::graph_node::GraphNode;
 use super::graph_utils::{graph_has_cycle, ordered_subnodes_hierarchy};
-use super::linked_graph_node::LinkedGraphNode;
+use super::linked_graph_node::{LinkedGraphNode, NodeContent};
 use super::reconnect::ReconnectType;
 
 pub type GraphEdge = (Arc<RwLock<LinkedGraphNode>>, Arc<RwLock<LinkedGraphNode>>);
+
+fn node_ptr(node: &Arc<RwLock<LinkedGraphNode>>) -> usize {
+    Arc::as_ptr(node) as usize
+}
 
 pub trait Graph {
     fn delete_node(&mut self, node: &Arc<RwLock<LinkedGraphNode>>, reconnect: ReconnectType);
@@ -48,9 +52,30 @@ pub trait Graph {
     fn descriptive_id(&self) -> String;
 }
 
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Default)]
 pub struct LinkedGraph {
     nodes: Vec<Arc<RwLock<LinkedGraphNode>>>,
+    /// Parent pointer -> active children (adjacency index).
+    children_index: HashMap<usize, Vec<Arc<RwLock<LinkedGraphNode>>>>,
+}
+
+impl Clone for LinkedGraph {
+    fn clone(&self) -> Self {
+        let mut graph = Self {
+            nodes: self.nodes.clone(),
+            children_index: HashMap::new(),
+        };
+        graph.rebuild_children_index();
+        graph
+    }
+}
+
+/// Creates a node that is not yet part of any graph's active node set.
+pub fn add_detached(
+    content: impl Into<NodeContent>,
+    parents: Vec<Arc<RwLock<LinkedGraphNode>>>,
+) -> Arc<RwLock<LinkedGraphNode>> {
+    LinkedGraphNode::with_parents(content, parents)
 }
 
 impl LinkedGraph {
@@ -68,6 +93,70 @@ impl LinkedGraph {
         g
     }
 
+    fn extend_parents_unique(
+        child: &Arc<RwLock<LinkedGraphNode>>,
+        parents: &[Arc<RwLock<LinkedGraphNode>>],
+    ) {
+        let mut guard = child.write().unwrap();
+        for parent in parents {
+            if !guard.nodes_from.iter().any(|p| Arc::ptr_eq(p, parent)) {
+                guard.nodes_from.push(parent.clone());
+            }
+        }
+    }
+
+    fn register_child(
+        &mut self,
+        parent: &Arc<RwLock<LinkedGraphNode>>,
+        child: &Arc<RwLock<LinkedGraphNode>>,
+    ) {
+        let children = self.children_index.entry(node_ptr(parent)).or_default();
+        if !children.iter().any(|c| Arc::ptr_eq(c, child)) {
+            children.push(child.clone());
+        }
+    }
+
+    fn unregister_child(
+        &mut self,
+        parent: &Arc<RwLock<LinkedGraphNode>>,
+        child: &Arc<RwLock<LinkedGraphNode>>,
+    ) {
+        if let Some(children) = self.children_index.get_mut(&node_ptr(parent)) {
+            children.retain(|c| !Arc::ptr_eq(c, child));
+        }
+    }
+
+    fn remove_from_children_index(&mut self, node: &Arc<RwLock<LinkedGraphNode>>) {
+        self.children_index.remove(&node_ptr(node));
+    }
+
+    fn rebuild_children_index(&mut self) {
+        self.children_index.clear();
+        let nodes = self.nodes.clone();
+        for node in &nodes {
+            let parents = node.read().unwrap().nodes_from.clone();
+            for parent in parents {
+                self.register_child(&parent, node);
+            }
+        }
+    }
+
+    fn sync_children_of(&mut self, parent: &Arc<RwLock<LinkedGraphNode>>) {
+        self.children_index.remove(&node_ptr(parent));
+        let nodes = self.nodes.clone();
+        for node in &nodes {
+            if node
+                .read()
+                .unwrap()
+                .nodes_from
+                .iter()
+                .any(|p| Arc::ptr_eq(p, parent))
+            {
+                self.register_child(parent, node);
+            }
+        }
+    }
+
     pub fn actualise_old_node_children(
         &mut self,
         old_node: &Arc<RwLock<LinkedGraphNode>>,
@@ -76,12 +165,14 @@ impl LinkedGraph {
         let offspring = self.node_children(old_node);
         for child in offspring {
             let mut child_guard = child.write().unwrap();
-            let len = child_guard.nodes_from.len();
-            for idx in 0..len {
+            for idx in 0..child_guard.nodes_from.len() {
                 if Arc::ptr_eq(&child_guard.nodes_from[idx], old_node) {
                     child_guard.nodes_from[idx] = new_node.clone();
                 }
             }
+            drop(child_guard);
+            self.unregister_child(old_node, &child);
+            self.register_child(new_node, &child);
         }
     }
 
@@ -98,8 +189,10 @@ impl LinkedGraph {
     fn clean_up_leftovers(&mut self, node: &Arc<RwLock<LinkedGraphNode>>) {
         if self.node_children(node).is_empty() {
             self.nodes.retain(|n| !Arc::ptr_eq(n, node));
+            self.remove_from_children_index(node);
             let parents = node.read().unwrap().nodes_from.clone();
             for parent in parents {
+                self.unregister_child(&parent, node);
                 self.clean_up_leftovers(&parent);
             }
         }
@@ -109,7 +202,7 @@ impl LinkedGraph {
         node: &Arc<RwLock<LinkedGraphNode>>,
         cache: &mut HashMap<usize, Arc<RwLock<LinkedGraphNode>>>,
     ) -> Arc<RwLock<LinkedGraphNode>> {
-        let ptr = Arc::as_ptr(node) as usize;
+        let ptr = node_ptr(node);
         if let Some(cached) = cache.get(&ptr) {
             return cached.clone();
         }
@@ -139,9 +232,14 @@ impl LinkedGraph {
         let nodes = self
             .nodes
             .iter()
-            .map(|n| cache.get(&(Arc::as_ptr(n) as usize)).unwrap().clone())
+            .map(|n| cache.get(&node_ptr(n)).unwrap().clone())
             .collect();
-        Self { nodes }
+        let mut graph = Self {
+            nodes,
+            children_index: HashMap::new(),
+        };
+        graph.rebuild_children_index();
+        graph
     }
 }
 
@@ -181,6 +279,11 @@ impl Graph for LinkedGraph {
         let node_children_cached = self.node_children(node);
         let node_parents = node.read().unwrap().nodes_from.clone();
 
+        for child in &node_children_cached {
+            self.unregister_child(node, child);
+        }
+        self.remove_from_children_index(node);
+
         self.nodes.retain(|n| !Arc::ptr_eq(n, node));
         for child in &node_children_cached {
             child
@@ -188,23 +291,28 @@ impl Graph for LinkedGraph {
                 .unwrap()
                 .nodes_from
                 .retain(|p| !Arc::ptr_eq(p, node));
+            for parent in &node_parents {
+                self.unregister_child(parent, child);
+            }
         }
 
         match reconnect {
             ReconnectType::Single => {
                 if !node_parents.is_empty() && node_children_cached.len() == 1 {
                     let child = &node_children_cached[0];
-                    child.write().unwrap().nodes_from.extend(node_parents);
+                    Self::extend_parents_unique(child, &node_parents);
+                    for parent in &node_parents {
+                        self.register_child(parent, child);
+                    }
                 }
             }
             ReconnectType::All => {
                 if !node_parents.is_empty() {
                     for child in &node_children_cached {
-                        child
-                            .write()
-                            .unwrap()
-                            .nodes_from
-                            .extend(node_parents.clone());
+                        Self::extend_parents_unique(child, &node_parents);
+                        for parent in &node_parents {
+                            self.register_child(parent, child);
+                        }
                     }
                 }
             }
@@ -214,17 +322,29 @@ impl Graph for LinkedGraph {
 
     fn delete_subtree(&mut self, node: &Arc<RwLock<LinkedGraphNode>>) {
         let subtree_nodes = ordered_subnodes_hierarchy(node).unwrap_or_else(|_| vec![node.clone()]);
-        let subtree_ptrs: HashSet<usize> = subtree_nodes
-            .iter()
-            .map(|n| Arc::as_ptr(n) as usize)
-            .collect();
+        let subtree_ptrs: HashSet<usize> = subtree_nodes.iter().map(node_ptr).collect();
+
+        for n in &subtree_nodes {
+            self.remove_from_children_index(n);
+        }
+        for children in self.children_index.values_mut() {
+            children.retain(|c| !subtree_ptrs.contains(&node_ptr(c)));
+        }
+
         self.nodes
-            .retain(|n| !subtree_ptrs.contains(&(Arc::as_ptr(n) as usize)));
-        for n in &self.nodes {
+            .retain(|n| !subtree_ptrs.contains(&node_ptr(n)));
+        let remaining = self.nodes.clone();
+        for n in &remaining {
+            let parents = n.read().unwrap().nodes_from.clone();
+            for parent in parents {
+                if subtree_ptrs.contains(&node_ptr(&parent)) {
+                    self.unregister_child(&parent, n);
+                }
+            }
             n.write()
                 .unwrap()
                 .nodes_from
-                .retain(|p| !subtree_ptrs.contains(&(Arc::as_ptr(p) as usize)));
+                .retain(|p| !subtree_ptrs.contains(&node_ptr(p)));
         }
     }
 
@@ -236,9 +356,9 @@ impl Graph for LinkedGraph {
         self.actualise_old_node_children(old, new);
         {
             let old_parents = old.read().unwrap().nodes_from.clone();
-            let mut new_guard = new.write().unwrap();
-            new_guard.nodes_from.extend(old_parents);
+            Self::extend_parents_unique(new, &old_parents);
         }
+        self.remove_from_children_index(old);
         self.nodes.retain(|n| !Arc::ptr_eq(n, old));
         self.add_node(new.clone());
         self.sort_nodes();
@@ -255,20 +375,26 @@ impl Graph for LinkedGraph {
         self.add_node(new_subtree);
         self.sort_nodes();
     }
+
     fn connect_nodes(
         &mut self,
         parent: &Arc<RwLock<LinkedGraphNode>>,
         child: &Arc<RwLock<LinkedGraphNode>>,
     ) {
-        if self
-            .node_children(parent)
+        let child_has_parent = child
+            .read()
+            .unwrap()
+            .nodes_from
             .iter()
-            .any(|c| Arc::ptr_eq(c, child))
-        {
+            .any(|p| Arc::ptr_eq(p, parent));
+        if child_has_parent {
+            self.register_child(parent, child);
             return;
         }
-        child.write().unwrap().nodes_from.push(parent.clone());
+        Self::extend_parents_unique(child, std::slice::from_ref(parent));
+        self.register_child(parent, child);
     }
+
     fn disconnect_nodes(
         &mut self,
         parent: &Arc<RwLock<LinkedGraphNode>>,
@@ -294,23 +420,31 @@ impl Graph for LinkedGraph {
             .unwrap()
             .nodes_from
             .retain(|p| !Arc::ptr_eq(p, parent));
+        self.unregister_child(parent, child);
         if clean_up_leftovers {
             self.clean_up_leftovers(parent);
         }
     }
+
     fn add_node(&mut self, node: Arc<RwLock<LinkedGraphNode>>) {
         if self.nodes.iter().any(|n| Arc::ptr_eq(n, &node)) {
             return;
         }
         self.nodes.push(node.clone());
         let parents = node.read().unwrap().nodes_from.clone();
+        for parent in &parents {
+            self.register_child(parent, &node);
+        }
+        self.sync_children_of(&node);
         for parent in parents {
             self.add_node(parent);
         }
     }
+
     fn nodes(&self) -> Vec<Arc<RwLock<LinkedGraphNode>>> {
         self.nodes.clone()
     }
+
     fn root_node(&self) -> Option<Arc<RwLock<LinkedGraphNode>>> {
         let roots = self.root_nodes();
         if roots.len() == 1 {
@@ -319,6 +453,7 @@ impl Graph for LinkedGraph {
             roots.first().cloned()
         }
     }
+
     fn root_nodes(&self) -> Vec<Arc<RwLock<LinkedGraphNode>>> {
         self.nodes
             .iter()
@@ -326,6 +461,7 @@ impl Graph for LinkedGraph {
             .cloned()
             .collect()
     }
+
     fn depth(&self) -> usize {
         if self.nodes.is_empty() {
             return 0;
@@ -336,9 +472,11 @@ impl Graph for LinkedGraph {
         }
         roots.iter().map(depth_from_node).max().unwrap_or(0)
     }
+
     fn length(&self) -> usize {
         self.nodes.len()
     }
+
     fn get_edges(&self) -> Vec<GraphEdge> {
         let mut edges = Vec::new();
         for node in &self.nodes {
@@ -351,23 +489,48 @@ impl Graph for LinkedGraph {
         }
         edges
     }
+
     fn node_children(
         &self,
         node: &Arc<RwLock<LinkedGraphNode>>,
     ) -> Vec<Arc<RwLock<LinkedGraphNode>>> {
-        self.nodes
-            .iter()
-            .filter(|other| {
-                let other = other.read().unwrap();
-                !other.nodes_from.is_empty()
-                    && other
-                        .nodes_from
-                        .iter()
-                        .any(|parent| Arc::ptr_eq(parent, node))
+        let ptr = node_ptr(node);
+        let mut children = self
+            .children_index
+            .get(&ptr)
+            .map(|indexed| {
+                indexed
+                    .iter()
+                    .filter(|c| {
+                        c.read()
+                            .unwrap()
+                            .nodes_from
+                            .iter()
+                            .any(|p| Arc::ptr_eq(p, node))
+                    })
+                    .cloned()
+                    .collect::<Vec<_>>()
             })
-            .cloned()
-            .collect()
+            .unwrap_or_default();
+
+        let indexed_ptrs: HashSet<usize> = children.iter().map(node_ptr).collect();
+        for candidate in &self.nodes {
+            if indexed_ptrs.contains(&node_ptr(candidate)) {
+                continue;
+            }
+            if candidate
+                .read()
+                .unwrap()
+                .nodes_from
+                .iter()
+                .any(|p| Arc::ptr_eq(p, node))
+            {
+                children.push(candidate.clone());
+            }
+        }
+        children
     }
+
     fn graphs_equal(&self, other: &dyn Graph) -> bool {
         let self_roots: HashSet<String> = self
             .root_nodes()
@@ -381,6 +544,7 @@ impl Graph for LinkedGraph {
             .collect();
         self_roots == other_roots
     }
+
     fn descriptive_id(&self) -> String {
         if self.length() == 0 {
             return "EMPTY".to_string();

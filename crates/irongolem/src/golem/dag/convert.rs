@@ -1,4 +1,4 @@
-use std::collections::{HashMap, HashSet};
+use std::collections::{BTreeMap, HashMap, HashSet};
 use std::sync::Arc;
 
 use serde_json::Value;
@@ -8,7 +8,7 @@ use super::linked_graph::Graph;
 #[derive(Debug, Clone, PartialEq)]
 pub struct ConvertedNode {
     pub name: String,
-    pub params: HashMap<String, Value>,
+    pub params: BTreeMap<String, Value>,
 }
 
 #[derive(Debug, Clone)]
