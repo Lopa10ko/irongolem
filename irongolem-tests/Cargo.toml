@@ -6,6 +6,7 @@ license.workspace = true
 publish = false
 
 [dependencies]
+irongolem = { path = "../crates/irongolem" }
 test-support = { path = "../crates/test-support" }
 serde_json.workspace = true
 

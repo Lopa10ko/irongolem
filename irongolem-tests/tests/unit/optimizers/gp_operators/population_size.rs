@@ -1,5 +1,24 @@
 //! population_size
 
+use std::cell::RefCell;
+use std::rc::Rc;
+use std::sync::Arc;
+
+use irongolem::golem::dag::GraphDelegate;
+use irongolem::golem::dag::LinkedGraphNode;
+use irongolem::golem::optimisers::fitness::{Fitness, SingleObjFitness};
+use irongolem::golem::optimisers::genetic::parameters::generation_keeper::GenerationKeeper;
+use irongolem::golem::optimisers::genetic::parameters::parameter::AdaptiveParameter;
+use irongolem::golem::optimisers::genetic::parameters::population_size::{
+    AdaptivePopulationSize, ConstRatePopulationSize,
+};
+use irongolem::golem::optimisers::genetic::parameters::sequence_iterator::SequenceIterator;
+use irongolem::golem::optimisers::history::Individual;
+use irongolem::golem::optimisers::objective::Objective;
+use test_support::fixtures::{
+    custom_objective_metrics, individual_with_primary_fitness, pop_size_sequence,
+};
+
 #[test]
 fn test_const_pop_size_increases() {
     // def test_const_pop_size_increases():
@@ -12,7 +31,10 @@ fn test_const_pop_size_increases() {
     //     # only one successfully evaluated individual
     //     population = [Individual(OptGraph(OptNode('rf')))]
     //     assert pop_size.next(population) >= initial_pop_size
-    assert!(false);
+    let initial_pop_size = 20;
+    let pop_size = ConstRatePopulationSize::new(initial_pop_size, 1.0, None);
+    let population = vec![individual_with_primary_fitness(0.0)];
+    assert!(pop_size.next(&population) >= initial_pop_size);
 }
 
 #[test]
@@ -34,7 +56,24 @@ fn test_adaptive_pop_size_increases() {
     //     generation_keeper.append(population_0)
     //     population_1 = [Individual(base_graph, fitness=fitness[1])]
     //     assert pop_size.next(population_1) >= len(population_1)
-    assert!(false);
+    let objective = Objective::new(custom_objective_metrics());
+    let generation_keeper = Rc::new(RefCell::new(GenerationKeeper::new(Some(objective))));
+    let pop_size = AdaptivePopulationSize::new(
+        generation_keeper.clone(),
+        SequenceIterator::new(pop_size_sequence, None, None, None),
+        None,
+    );
+    let base_graph = Arc::new(GraphDelegate::new(LinkedGraphNode::from_name("rf")));
+    let population_0 = vec![Individual::with_fitness(
+        base_graph.clone(),
+        Fitness::Single(SingleObjFitness::new(Some(-0.8), &[])),
+    )];
+    generation_keeper.borrow_mut().append(&population_0);
+    let population_1 = vec![Individual::with_fitness(
+        base_graph,
+        Fitness::Single(SingleObjFitness::new(Some(-1.0), &[])),
+    )];
+    assert!(pop_size.next(&population_1) >= population_1.len());
 }
 
 #[test]
@@ -59,5 +98,22 @@ fn test_adaptive_max_pop_size() {
     //         cur_pop_size = pop_size.next(population)
     //         print(cur_pop_size)
     //         assert cur_pop_size <= max_pop_size
-    assert!(false);
+    let objective = Objective::new(custom_objective_metrics());
+    let max_pop_size = 20;
+    let generation_keeper = Rc::new(RefCell::new(GenerationKeeper::new(Some(objective))));
+    let pop_size = AdaptivePopulationSize::new(
+        generation_keeper.clone(),
+        SequenceIterator::new(pop_size_sequence, None, None, None),
+        Some(max_pop_size),
+    );
+    let base_graph = Arc::new(GraphDelegate::new(LinkedGraphNode::from_name("rf")));
+    let population = vec![Individual::with_fitness(
+        base_graph,
+        Fitness::Single(SingleObjFitness::new(Some(-0.8), &[])),
+    )];
+    for _ in 0..10 {
+        generation_keeper.borrow_mut().append(&population);
+        let cur_pop_size = pop_size.next(&population);
+        assert!(cur_pop_size <= max_pop_size);
+    }
 }

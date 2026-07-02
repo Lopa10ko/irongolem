@@ -10,8 +10,8 @@ Rust reimplementation of evolutionary graph optimization (spec derived from [GOL
 ```
 Cargo.toml              # workspace root (run cargo here)
 crates/
-  irongolem/            # core library
-  test-support/         # test fixtures & stub API
+  irongolem/            # GOLEM port (all framework logic)
+  test-support/         # test fixtures + helpers
 irongolem-tests/        # unit test package + JSON fixtures
 ```
 

@@ -1,7 +1,5 @@
-use test_support::fixtures::find_same_node;
-use test_support::golem::dag::{
-    Graph, GraphDelegate, GraphImpl, GraphNode, LinkedGraph, LinkedGraphNode, NodeContent,
-    ReconnectType,
+use irongolem::golem::dag::{
+    add_detached, Graph, GraphImpl, GraphNode, LinkedGraphNode, NodeContent, ReconnectType,
 };
 
 #[test]
@@ -43,4 +41,15 @@ fn test_graph_copy_shallow() {
     let graph_copy = graph.clone();
     assert_ne!(graph.length(), 0);
     assert_eq!(graph.length(), graph_copy.length());
+}
+
+#[test]
+fn test_add_detached_then_register() {
+    let parent = add_detached("p", vec![]);
+    let child = add_detached("c", vec![parent.clone()]);
+    let mut graph = GraphImpl::default();
+    assert_eq!(graph.length(), 0);
+    graph.add_node(child);
+    assert_eq!(graph.length(), 2);
+    assert_eq!(graph.depth(), 2);
 }

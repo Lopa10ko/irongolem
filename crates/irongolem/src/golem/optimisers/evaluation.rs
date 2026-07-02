@@ -1,10 +1,10 @@
 use std::sync::Arc;
 
-use crate::golem::adapter::DirectAdapter;
-use crate::golem::dag::GraphDelegate;
 use super::fitness::Fitness;
 use super::history::Individual;
 use super::timer::OptimisationTimer;
+use crate::golem::adapter::DirectAdapter;
+use crate::golem::dag::GraphDelegate;
 
 pub type ObjectiveFn = Arc<dyn Fn(Arc<GraphDelegate>) -> Fitness + Send + Sync>;
 pub type Evaluator = Arc<dyn Fn(Vec<Individual>) -> Vec<Individual> + Send + Sync>;
@@ -31,7 +31,7 @@ impl EvaluationDispatcher for SequentialDispatcher {
                 .into_iter()
                 .filter_map(|mut ind| {
                     let f = objective(ind.graph.clone());
-                    if f.valid {
+                    if f.is_valid() {
                         ind.fitness = f;
                         Some(ind)
                     } else {

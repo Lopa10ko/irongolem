@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::BTreeMap;
 use std::fmt;
 use std::sync::{Arc, RwLock};
 
@@ -9,18 +9,18 @@ use super::graph_node::GraphNode;
 #[derive(Debug, Clone)]
 pub struct NodeContent {
     pub name: String,
-    pub params: HashMap<String, Value>,
+    pub params: BTreeMap<String, Value>,
 }
 
 impl NodeContent {
     pub fn new(name: impl Into<String>) -> Self {
         Self {
             name: name.into(),
-            params: HashMap::new(),
+            params: BTreeMap::new(),
         }
     }
 
-    pub fn with_params(name: impl Into<String>, params: HashMap<String, Value>) -> Self {
+    pub fn with_params(name: impl Into<String>, params: BTreeMap<String, Value>) -> Self {
         Self {
             name: name.into(),
             params,

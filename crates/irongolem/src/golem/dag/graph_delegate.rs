@@ -1,6 +1,6 @@
 use std::sync::{Arc, RwLock};
 
-use super::linked_graph::{Graph, LinkedGraph};
+use super::linked_graph::{Graph, GraphEdge, LinkedGraph};
 use super::linked_graph_node::LinkedGraphNode;
 use super::reconnect::ReconnectType;
 
@@ -27,6 +27,26 @@ impl GraphDelegate {
             operator: LinkedGraph::default(),
         }
     }
+
+    pub fn operator(&self) -> &LinkedGraph {
+        &self.operator
+    }
+
+    pub fn operator_mut(&mut self) -> &mut LinkedGraph {
+        &mut self.operator
+    }
+
+    pub fn deep_clone(&self) -> Self {
+        Self {
+            operator: self.operator.deep_clone(),
+        }
+    }
+}
+
+impl PartialEq for GraphDelegate {
+    fn eq(&self, other: &Self) -> bool {
+        self.graphs_equal(other)
+    }
 }
 
 impl Graph for GraphDelegate {
@@ -36,14 +56,35 @@ impl Graph for GraphDelegate {
     fn delete_subtree(&mut self, node: &Arc<RwLock<LinkedGraphNode>>) {
         self.operator.delete_subtree(node);
     }
-    fn update_node(&mut self, old: &Arc<RwLock<LinkedGraphNode>>, new: &Arc<RwLock<LinkedGraphNode>>) {
+    fn update_node(
+        &mut self,
+        old: &Arc<RwLock<LinkedGraphNode>>,
+        new: &Arc<RwLock<LinkedGraphNode>>,
+    ) {
         self.operator.update_node(old, new);
     }
-    fn update_subtree(&mut self, old: &Arc<RwLock<LinkedGraphNode>>, new: &Arc<RwLock<LinkedGraphNode>>) {
+    fn update_subtree(
+        &mut self,
+        old: &Arc<RwLock<LinkedGraphNode>>,
+        new: &Arc<RwLock<LinkedGraphNode>>,
+    ) {
         self.operator.update_subtree(old, new);
     }
-    fn connect_nodes(&mut self, parent: &Arc<RwLock<LinkedGraphNode>>, child: &Arc<RwLock<LinkedGraphNode>>) {
+    fn connect_nodes(
+        &mut self,
+        parent: &Arc<RwLock<LinkedGraphNode>>,
+        child: &Arc<RwLock<LinkedGraphNode>>,
+    ) {
         self.operator.connect_nodes(parent, child);
+    }
+    fn disconnect_nodes(
+        &mut self,
+        parent: &Arc<RwLock<LinkedGraphNode>>,
+        child: &Arc<RwLock<LinkedGraphNode>>,
+        clean_up_leftovers: bool,
+    ) {
+        self.operator
+            .disconnect_nodes(parent, child, clean_up_leftovers);
     }
     fn add_node(&mut self, node: Arc<RwLock<LinkedGraphNode>>) {
         self.operator.add_node(node);
@@ -63,10 +104,13 @@ impl Graph for GraphDelegate {
     fn length(&self) -> usize {
         self.operator.length()
     }
-    fn get_edges(&self) -> Vec<(Arc<RwLock<LinkedGraphNode>>, Arc<RwLock<LinkedGraphNode>>)> {
+    fn get_edges(&self) -> Vec<GraphEdge> {
         self.operator.get_edges()
     }
-    fn node_children(&self, node: &Arc<RwLock<LinkedGraphNode>>) -> Vec<Arc<RwLock<LinkedGraphNode>>> {
+    fn node_children(
+        &self,
+        node: &Arc<RwLock<LinkedGraphNode>>,
+    ) -> Vec<Arc<RwLock<LinkedGraphNode>>> {
         self.operator.node_children(node)
     }
     fn graphs_equal(&self, other: &dyn Graph) -> bool {

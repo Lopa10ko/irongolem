@@ -1,7 +1,7 @@
-use std::collections::HashMap;
+use std::collections::BTreeMap;
 
+use irongolem::golem::dag::{GraphNode, LinkedGraphNode, NodeContent};
 use serde_json::json;
-use test_support::golem::dag::{GraphNode, LinkedGraphNode, NodeContent};
 
 #[test]
 fn test_node_description() {
@@ -14,7 +14,7 @@ fn test_node_description() {
 #[test]
 fn test_node_description_with_params() {
     let operation_type = "logit";
-    let mut params = HashMap::new();
+    let mut params = BTreeMap::new();
     params.insert("some_param".to_string(), json!(10));
     let node = LinkedGraphNode::new(NodeContent::with_params(operation_type, params.clone()));
     let expected = format!("n_{operation_type}_{params:?}");
