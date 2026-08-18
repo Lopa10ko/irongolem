@@ -331,8 +331,7 @@ impl Graph for LinkedGraph {
             children.retain(|c| !subtree_ptrs.contains(&node_ptr(c)));
         }
 
-        self.nodes
-            .retain(|n| !subtree_ptrs.contains(&node_ptr(n)));
+        self.nodes.retain(|n| !subtree_ptrs.contains(&node_ptr(n)));
         let remaining = self.nodes.clone();
         for n in &remaining {
             let parents = n.read().unwrap().nodes_from.clone();
