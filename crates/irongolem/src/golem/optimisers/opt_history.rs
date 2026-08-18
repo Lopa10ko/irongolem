@@ -209,8 +209,7 @@ impl OptHistory {
         } else {
             path_or_str.to_string()
         };
-        let mut value: Value = serde_json::from_str(&content)?;
-        crate::golem::serializers::remap_legacy_paths(&mut value);
+        let value: Value = serde_json::from_str(&content)?;
         Ok(history_from_json(&value))
     }
 
@@ -233,18 +232,8 @@ impl OptHistory {
 }
 
 fn parse_objective_info(value: &Value) -> Option<ObjectiveInfo> {
-    if let Some(obj) = value.get("_objective").or_else(|| value.get("objective")) {
-        if let Ok(info) = serde_json::from_value::<ObjectiveInfo>(obj.clone()) {
-            return Some(info);
-        }
-    }
-    value
-        .get("_is_multi_objective")
-        .and_then(|v| v.as_bool())
-        .map(|is_multi_objective| ObjectiveInfo {
-            is_multi_objective,
-            metric_names: Vec::new(),
-        })
+    let obj = value.get("_objective").or_else(|| value.get("objective"))?;
+    serde_json::from_value::<ObjectiveInfo>(obj.clone()).ok()
 }
 
 fn history_to_json(history: &OptHistory) -> Value {
@@ -265,34 +254,16 @@ fn history_to_json(history: &OptHistory) -> Value {
 }
 
 fn history_from_json(value: &Value) -> OptHistory {
-    let mut root = value.clone();
-    if let Some(obj) = root.as_object_mut() {
-        if obj.contains_key("_is_multi_objective") && !obj.contains_key("_objective") {
-            if let Some(info) = parse_objective_info(value) {
-                obj.insert(
-                    "_objective".into(),
-                    serde_json::to_value(info).unwrap_or(Value::Null),
-                );
-            }
-            obj.remove("_is_multi_objective");
-        }
-        if obj.contains_key("individuals") && !obj.contains_key("_generations") {
-            if let Some(individuals) = obj.remove("individuals") {
-                obj.insert("_generations".into(), individuals);
-            }
-        }
-    }
-
-    let objective = parse_objective_info(&root);
-    let default_save_dir = root
+    let objective = parse_objective_info(value);
+    let default_save_dir = value
         .get("_default_save_dir")
         .and_then(|v| v.as_str())
         .unwrap_or_default()
         .to_string();
 
-    let mut uid_map = parse_individuals_pool(&root);
-    let generations = parse_generations(&root, &mut uid_map);
-    let archive_history = parse_archive_history(&root);
+    let mut uid_map = parse_individuals_pool(value);
+    let generations = parse_generations(value, &mut uid_map);
+    let archive_history = parse_archive_history(value);
 
     let mut history = OptHistory {
         generations,
@@ -352,10 +323,7 @@ fn parse_individuals_pool(value: &Value) -> HashMap<String, Individual> {
 }
 
 fn parse_generations(value: &Value, uid_map: &mut HashMap<String, Individual>) -> Vec<Generation> {
-    let raw = value
-        .get("_generations")
-        .or_else(|| value.get("individuals"));
-    let Some(arr) = raw.and_then(|v| v.as_array()) else {
+    let Some(arr) = value.get("_generations").and_then(|v| v.as_array()) else {
         return Vec::new();
     };
     arr.iter()
@@ -370,11 +338,7 @@ fn parse_one_generation(
     uid_map: &mut HashMap<String, Individual>,
 ) -> Generation {
     if let Some(obj) = gen_val.as_object() {
-        let uid_seq = obj
-            .get("data")
-            .or_else(|| obj.get("individuals"))
-            .cloned()
-            .unwrap_or(Value::Array(Vec::new()));
+        let uid_seq = obj.get("data").cloned().unwrap_or(Value::Array(Vec::new()));
         let individuals = uids_to_individuals(&uid_seq, uid_map);
         let generation_num = obj
             .get("generation_num")
