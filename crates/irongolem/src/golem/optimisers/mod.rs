@@ -1,17 +1,27 @@
 pub mod advisor;
+pub mod archive;
 pub mod evaluation;
 pub mod fitness;
 pub mod genetic;
 pub mod history;
+pub mod initial_population_generator;
 pub mod objective;
+pub mod opt_history;
+pub mod optimizer;
+pub mod populational_optimizer;
 pub mod random_graph_factory;
 pub mod timer;
 
 pub use advisor::*;
+pub use archive::*;
 pub use evaluation::*;
 pub use fitness::*;
 pub use genetic::*;
 pub use history::*;
+pub use initial_population_generator::*;
 pub use objective::*;
+pub use opt_history::*;
+pub use optimizer::*;
+pub use populational_optimizer::*;
 pub use random_graph_factory::*;
 pub use timer::*;

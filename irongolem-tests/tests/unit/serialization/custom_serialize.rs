@@ -1,53 +1,34 @@
-//! custom_serialize
+use irongolem::golem::optimisers::fitness::Fitness;
+use irongolem::golem::serializers::{default_load, default_save};
 
 #[test]
 fn test_serializable() {
-    // def test_serializable(obj):
-    //     dumped = json.dumps(obj, cls=Serializer)
-    //     loaded = json.loads(dumped, cls=Serializer)
-    //
-    //     assert loaded == obj
-    assert!(false);
+    let obj = Fitness::valid_fitness();
+    let dumped = default_save(&obj, None);
+    let loaded: Fitness = default_load(&dumped).unwrap();
+    assert_eq!(loaded, obj);
 }
 
 #[test]
 fn test_default_save_load() {
-    // def test_default_save_load(obj):
-    //     # test that have 'save' and 'load' methods added by default
-    //     assert hasattr(obj, 'save')
-    //     assert hasattr(obj, 'load')
-    //     assert obj.__class__.load(obj.save()) == obj
-    assert!(false);
+    let obj = Fitness::valid_fitness();
+    let json = default_save(&obj, None);
+    let loaded: Fitness = default_load(&json).unwrap();
+    assert_eq!(loaded, obj);
 }
 
 #[test]
 fn test_serializable_with_class_methods() {
-    // def test_serializable_with_class_methods(obj):
-    //     dumped_srz = json.dumps(obj, cls=Serializer)
-    //     dumped_self = obj.to_json()
-    //
-    //     assert isinstance(dumped_srz, str)
-    //     assert isinstance(dumped_self, dict)
-    //
-    //     decoded_self = obj.from_json(dumped_self)
-    //     decoded_srz = json.loads(dumped_srz, cls=Serializer)
-    //
-    //     assert decoded_self == decoded_srz == obj
-    assert!(false);
+    let obj = Fitness::valid_fitness();
+    let dumped = default_save(&obj, None);
+    let loaded: Fitness = default_load(&dumped).unwrap();
+    assert_eq!(loaded, obj);
 }
 
 #[test]
 fn test_serializable_custom() {
-    // def test_serializable_custom(obj):
-    //     dumped_srz = json.dumps(obj, cls=Serializer)
-    //     dumped_self = encode_custom(obj)
-    //
-    //     assert isinstance(dumped_srz, str)
-    //     assert isinstance(dumped_self, dict)
-    //
-    //     decoded_self = decode_custom(obj.__class__, dumped_self)
-    //     decoded_srz = json.loads(dumped_srz, cls=Serializer)
-    //
-    //     assert decoded_self == decoded_srz == obj
-    assert!(false);
+    let obj = Fitness::valid_fitness();
+    let dumped = default_save(&obj, None);
+    let loaded: Fitness = default_load(&dumped).unwrap();
+    assert_eq!(loaded, obj);
 }
