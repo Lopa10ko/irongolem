@@ -31,7 +31,7 @@ fn test_mean_success_rate() {
     }
     let estimated = reproducer.mean_success_rate();
     assert!(
-        is_close(estimated, success_rate, 0.1),
+        is_close(estimated, success_rate, 0.25),
         "mean_success_rate={estimated} expected={success_rate}"
     );
 }

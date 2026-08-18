@@ -14,16 +14,14 @@ use irongolem::golem::optimisers::genetic::operators::EvaluationOperator;
 use irongolem::golem::optimisers::genetic::operators::MutationTypesEnum;
 use irongolem::golem::optimisers::genetic::operators::PopulationT;
 use irongolem::golem::optimisers::genetic::params::{
-    GPAlgorithmParameters, GraphGenerationParams, GraphRequirements, SelectionType,
+    GPAlgorithmParameters, GraphGenerationParams, GraphRequirements, OptNodeFactory, SelectionType,
 };
-use irongolem::golem::optimisers::genetic::rng::{random_choice, sample, set_random_seed};
+use irongolem::golem::optimisers::genetic::rng::{sample, set_random_seed, GeneticRng};
 use irongolem::golem::optimisers::history::Individual;
 use irongolem::golem::optimisers::objective::Objective;
+use irongolem::golem::optimisers::random_graph_factory::RandomGrowthGraphFactory;
 
-use super::graphs::{
-    graph_fifth, graph_first, graph_fourth, graph_second, graph_third, simple_linear_graph,
-    tree_graph,
-};
+use super::graphs::{graph_fifth, graph_first, graph_fourth, graph_second, graph_third};
 use super::metrics::RandomMetric;
 
 pub struct MutationParams {
@@ -83,20 +81,26 @@ pub fn get_mutation_params(
 }
 
 pub fn get_rand_population(pop_size: usize) -> PopulationT {
+    set_random_seed(42);
     let adapter = DirectAdapter;
-    let templates = [
-        graph_first(),
-        graph_second(),
-        graph_third(),
-        graph_fourth(),
-        graph_fifth(),
-        tree_graph(),
-        simple_linear_graph(),
-    ];
+    let verifier = Arc::new(|_: &GraphDelegate| true);
+    let node_factory = Arc::new(OptNodeFactory::new(vec![
+        "x".into(),
+        "y".into(),
+        "z".into(),
+    ]));
+    let factory = RandomGrowthGraphFactory::new(verifier, node_factory, GeneticRng::seeded(42));
+    let requirements = GraphRequirements {
+        max_depth: 8,
+        min_arity: 1,
+        max_arity: 3,
+        ..GraphRequirements::default()
+    };
     (0..pop_size)
-        .filter_map(|_| {
-            let template = random_choice(&templates)?;
-            Some(Individual::new(adapter.adapt(template.deep_clone())))
+        .map(|i| {
+            let max_depth = 5 + (i % 10);
+            let graph = factory.generate(&requirements, Some(max_depth));
+            Individual::new(adapter.adapt(graph))
         })
         .collect()
 }
@@ -187,7 +191,6 @@ pub fn reproducer_with_pop_size(pop_size: usize) -> ReproductionController {
     params.max_pop_size = Some(100);
     params.offspring_rate = 0.2;
     params.required_valid_ratio = 0.9;
-    params.mutation_prob = 1.0;
     params.crossover_types = vec![CrossoverTypesEnum::None];
     params.mutation_types = vec![MutationTypesEnum::SingleAdd, MutationTypesEnum::SingleDrop];
 
