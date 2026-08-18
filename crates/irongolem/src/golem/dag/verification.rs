@@ -1,8 +1,22 @@
 use std::collections::HashSet;
 use std::sync::Arc;
 
+use super::graph_delegate::GraphDelegate;
 use super::graph_utils::{get_connected_components, graph_has_cycle};
 use super::linked_graph::Graph;
+
+/// Native DAG verification rules registered with the adapter (Python `DEFAULT_DAG_RULES`
+/// minus `has_root` / `has_one_root`, which are not used by the current Rust verifier).
+pub type DagRule = fn(&GraphDelegate) -> Result<(), String>;
+
+pub fn default_dag_rules() -> [DagRule; 4] {
+    [
+        has_no_cycle as DagRule,
+        has_no_isolated_nodes as DagRule,
+        has_no_self_cycled_nodes as DagRule,
+        has_no_isolated_components as DagRule,
+    ]
+}
 
 pub const ERROR_PREFIX: &str = "Invalid graph configuration:";
 
