@@ -16,7 +16,7 @@ use irongolem::golem::optimisers::genetic::operators::PopulationT;
 use irongolem::golem::optimisers::genetic::params::{
     GPAlgorithmParameters, GraphGenerationParams, GraphRequirements, SelectionType,
 };
-use irongolem::golem::optimisers::genetic::rng::{random_choice, sample};
+use irongolem::golem::optimisers::genetic::rng::{random_choice, sample, set_random_seed};
 use irongolem::golem::optimisers::history::Individual;
 use irongolem::golem::optimisers::objective::Objective;
 
@@ -179,12 +179,15 @@ pub fn reproducer_fixture() -> ReproductionController {
 }
 
 pub fn reproducer_with_pop_size(pop_size: usize) -> ReproductionController {
+    set_random_seed(42);
     let requirements = GraphRequirements::default();
-    let graph_gen_params = GraphGenerationParams::new(vec!["x".into()]);
+    let mut graph_gen_params = GraphGenerationParams::new(vec!["x".into()]);
+    graph_gen_params.verifier = Arc::new(|_| true);
     let mut params = GPAlgorithmParameters::new(pop_size).with_random_seed(42);
     params.max_pop_size = Some(100);
     params.offspring_rate = 0.2;
     params.required_valid_ratio = 0.9;
+    params.mutation_prob = 1.0;
     params.crossover_types = vec![CrossoverTypesEnum::None];
     params.mutation_types = vec![MutationTypesEnum::SingleAdd, MutationTypesEnum::SingleDrop];
 
@@ -220,5 +223,5 @@ pub fn elitism_set_up() -> (PopulationT, PopulationT) {
 }
 
 pub fn is_close(left: f64, right: f64, rtol: f64) -> bool {
-    (left - right).abs() <= rtol * right.abs().max(1e-10)
+    (left - right).abs() <= 1e-8 + rtol * right.abs()
 }

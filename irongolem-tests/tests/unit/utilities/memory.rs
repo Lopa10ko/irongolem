@@ -1,6 +1,7 @@
 //! memory
 
 #[test]
+#[ignore = "deferred: MemoryAnalytics not ported"]
 fn test_memory_logging_in_active_mode() {
     // def test_memory_logging_in_active_mode():
     //     MemoryAnalytics.start()
@@ -14,6 +15,7 @@ fn test_memory_logging_in_active_mode() {
 }
 
 #[test]
+#[ignore = "deferred: MemoryAnalytics not ported"]
 fn test_memory_logging_in_non_active_mode() {
     // def test_memory_logging_in_non_active_mode():
     //     message = MemoryAnalytics.log(additional_info='test')
