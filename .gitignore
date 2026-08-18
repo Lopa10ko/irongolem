@@ -31,3 +31,4 @@ scripts/test-module.sh
 # Experiment outputs
 examples/results/
 .venv/
+examples/
