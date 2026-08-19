@@ -85,7 +85,7 @@ impl Mutation {
             let op = crate::golem::optimisers::history::ParentOperator::new(
                 "mutation",
                 format!("{mutation_type:?}"),
-                vec![parent],
+                vec![Arc::new(parent)],
             );
             Some(result.with_parent_operator(op))
         }

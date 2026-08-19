@@ -91,18 +91,19 @@ impl Crossover {
                 && (self.graph_generation_params.verifier)(&second_object);
             if are_correct {
                 let op_type = format!("{crossover_type:?}");
+                let parents = vec![Arc::new(ind_first.clone()), Arc::new(ind_second.clone())];
                 let first = Individual::new(Arc::new(first_object)).with_parent_operator(
                     crate::golem::optimisers::history::ParentOperator::new(
                         "crossover",
                         op_type.clone(),
-                        vec![ind_first.clone(), ind_second.clone()],
+                        parents.clone(),
                     ),
                 );
                 let second = Individual::new(Arc::new(second_object)).with_parent_operator(
                     crate::golem::optimisers::history::ParentOperator::new(
                         "crossover",
                         op_type,
-                        vec![ind_first.clone(), ind_second.clone()],
+                        parents,
                     ),
                 );
                 return (first, second);

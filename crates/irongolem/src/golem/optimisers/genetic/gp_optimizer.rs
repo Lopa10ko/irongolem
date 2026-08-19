@@ -12,6 +12,7 @@ use super::rng::random_choice;
 use crate::golem::dag::{Graph, GraphDelegate};
 use crate::golem::optimisers::evaluation::ObjectiveFn;
 use crate::golem::optimisers::history::Individual;
+use crate::golem::optimisers::initial_population_generator::InitialPopulationGenerator;
 use crate::golem::optimisers::objective::{Objective, ObjectiveEvaluate};
 use crate::golem::optimisers::opt_history::OptHistory;
 use crate::golem::optimisers::populational_optimizer::PopulationalOptimizer;
@@ -37,11 +38,19 @@ impl EvoGraphOptimizer {
             requirements.max_depth = requirements.start_depth;
         }
 
-        let adapted: Vec<Individual> = initial_graphs
-            .unwrap_or_default()
-            .into_iter()
-            .map(Individual::new)
-            .collect();
+        let initial_graphs = if initial_graphs
+            .as_ref()
+            .is_none_or(|graphs| graphs.is_empty())
+        {
+            let mut generator = InitialPopulationGenerator::new(
+                graph_optimizer_params.pop_size,
+                graph_generation_params.clone(),
+                requirements.clone(),
+            );
+            Some(generator.generate())
+        } else {
+            initial_graphs
+        };
 
         let selection = Selection::new(graph_optimizer_params.clone(), requirements.clone());
         let crossover = Crossover::new(
@@ -62,18 +71,28 @@ impl EvoGraphOptimizer {
             crossover.clone(),
         );
 
+        let populational = PopulationalOptimizer::new(
+            objective,
+            initial_graphs,
+            requirements,
+            graph_generation_params,
+            graph_optimizer_params,
+        );
+        let initial_individuals = populational
+            .base
+            .initial_graphs
+            .clone()
+            .unwrap_or_default()
+            .into_iter()
+            .map(Individual::new)
+            .collect();
+
         Self {
-            populational: PopulationalOptimizer::new(
-                objective,
-                None,
-                requirements,
-                graph_generation_params,
-                graph_optimizer_params,
-            ),
+            populational,
             mutation,
             elitism,
             reproducer,
-            initial_individuals: adapted,
+            initial_individuals,
         }
     }
 
@@ -93,12 +112,11 @@ impl EvoGraphOptimizer {
             let objective = objective_eval.objective.clone();
             move |graph| objective.evaluate(graph)
         });
+        self.populational.timer.start();
         let evaluator = self
             .populational
             .eval_dispatcher()
-            .dispatch(objective_fn, None);
-
-        self.populational.timer.start();
+            .dispatch(objective_fn, Some(self.populational.timer.clone()));
         self.initial_population(&evaluator)?;
 
         while !self.populational.should_stop() {
