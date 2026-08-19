@@ -15,7 +15,7 @@ pub struct ParentOperator {
     pub type_: String,
     pub operators: String,
     #[serde(skip)]
-    pub parent_individuals: Vec<Individual>,
+    pub parent_individuals: Vec<Arc<Individual>>,
     pub parent_uids: Vec<String>,
 }
 
@@ -23,7 +23,7 @@ impl ParentOperator {
     pub fn new(
         type_: impl Into<String>,
         operators: impl Into<String>,
-        parent_individuals: Vec<Individual>,
+        parent_individuals: Vec<Arc<Individual>>,
     ) -> Self {
         let parent_uids = parent_individuals.iter().map(|p| p.uid.clone()).collect();
         Self {
@@ -34,7 +34,7 @@ impl ParentOperator {
         }
     }
 
-    pub fn parents(&self) -> &[Individual] {
+    pub fn parents(&self) -> &[Arc<Individual>] {
         &self.parent_individuals
     }
 }
@@ -123,14 +123,14 @@ impl Individual {
         self.native_generation.is_some()
     }
 
-    pub fn parents(&self) -> Vec<Individual> {
+    pub fn parents(&self) -> Vec<Arc<Individual>> {
         self.parent_operator
             .as_ref()
             .map(|op| op.parent_individuals.clone())
             .unwrap_or_default()
     }
 
-    pub fn parents_from_prev_generation(&self) -> Vec<Individual> {
+    pub fn parents_from_prev_generation(&self) -> Vec<Arc<Individual>> {
         let mut next_parents = self.parents();
         for _ in 0..1_000_000 {
             if next_parents.is_empty() || next_parents.iter().all(|p| p.has_native_generation()) {

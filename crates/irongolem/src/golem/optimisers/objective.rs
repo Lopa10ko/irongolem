@@ -3,7 +3,7 @@ use std::sync::Arc;
 
 use serde::{Deserialize, Serialize};
 
-use super::fitness::{to_fitness, Fitness};
+use super::fitness::{null_fitness, to_fitness, Fitness};
 use crate::golem::dag::GraphDelegate;
 
 pub type MetricFn = Arc<dyn Fn(Arc<GraphDelegate>) -> f64 + Send + Sync>;
@@ -82,18 +82,16 @@ impl Objective {
     }
 
     pub fn evaluate(&self, graph: Arc<GraphDelegate>) -> Fitness {
-        let values: Vec<f64> = self
-            .metric_names()
-            .iter()
-            .map(|name| {
-                self.evaluators
-                    .get(name)
-                    .map(|f| f(graph.clone()))
-                    .unwrap_or(0.0)
-            })
-            .collect();
-        if values.is_empty() {
+        let names = self.metric_names();
+        if names.is_empty() {
             return Fitness::valid_fitness();
+        }
+        let mut values = Vec::with_capacity(names.len());
+        for name in &names {
+            let Some(evaluator) = self.evaluators.get(name) else {
+                return null_fitness();
+            };
+            values.push(evaluator(graph.clone()));
         }
         to_fitness(&values, self.is_multi_objective)
     }

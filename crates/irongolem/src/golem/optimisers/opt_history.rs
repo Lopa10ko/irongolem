@@ -193,7 +193,11 @@ impl OptHistory {
         output
     }
 
-    pub fn save(&self, json_file_path: Option<&Path>, is_save_light: bool) -> String {
+    pub fn save(
+        &self,
+        json_file_path: Option<&Path>,
+        is_save_light: bool,
+    ) -> Result<String, crate::golem::serializers::SerializerError> {
         let history = if is_save_light {
             self.lighten()
         } else {
@@ -203,13 +207,8 @@ impl OptHistory {
         crate::golem::serializers::default_save(&value, json_file_path)
     }
 
-    pub fn load(path_or_str: &str) -> Result<Self, serde_json::Error> {
-        let content = if std::path::Path::new(path_or_str).exists() {
-            std::fs::read_to_string(path_or_str).unwrap_or_else(|_| path_or_str.to_string())
-        } else {
-            path_or_str.to_string()
-        };
-        let value: Value = serde_json::from_str(&content)?;
+    pub fn load(path_or_str: &str) -> Result<Self, crate::golem::serializers::SerializerError> {
+        let value: Value = crate::golem::serializers::default_load(path_or_str)?;
         Ok(history_from_json(&value))
     }
 
@@ -285,7 +284,7 @@ fn flatten_individuals(history: &OptHistory) -> Vec<Individual> {
         by_uid.insert(ind.uid.clone(), ind.clone());
         if let Some(op) = &ind.parent_operator {
             for parent in &op.parent_individuals {
-                collect(parent, by_uid);
+                collect(parent.as_ref(), by_uid);
             }
         }
     }
@@ -433,10 +432,12 @@ fn resolve_parents_of(ind: &mut Individual, uid_map: &HashMap<String, Individual
                 .parent_uids
                 .iter()
                 .map(|uid| {
-                    uid_map
-                        .get(uid)
-                        .cloned()
-                        .unwrap_or_else(|| missing_individual(uid))
+                    Arc::new(
+                        uid_map
+                            .get(uid)
+                            .cloned()
+                            .unwrap_or_else(|| missing_individual(uid)),
+                    )
                 })
                 .collect();
         }
