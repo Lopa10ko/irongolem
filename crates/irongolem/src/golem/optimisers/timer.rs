@@ -1,5 +1,6 @@
 use std::time::{Duration, Instant};
 
+#[derive(Clone)]
 pub struct OptimisationTimer {
     pub timeout: Option<Duration>,
     start: Option<Instant>,
