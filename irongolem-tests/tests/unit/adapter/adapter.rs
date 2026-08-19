@@ -84,3 +84,60 @@ fn test_no_opt_or_graph_nodes_after_adapt_so_complex_graph() {
     let restored = adapter.restore(adapter.adapt(graph));
     assert_eq!(restored.nodes.len(), 3);
 }
+
+fn mock_node_name(node: &MockNode) -> &str {
+    node.content
+        .get("name")
+        .and_then(|v| v.as_str())
+        .unwrap_or("")
+}
+
+#[test]
+fn test_mock_adapter_roundtrip_three_node_chain() {
+    let first = MockNode::new("n1");
+    let second = MockNode::with_parent("n2", first);
+    let third = MockNode::with_parent("n3", second);
+    let graph = MockDomainStructure::new(vec![third]);
+    let adapter = MockAdapter;
+
+    let opt_graph = adapter.adapt(graph);
+    assert_eq!(opt_graph.as_ref().length(), 3);
+    assert_eq!(opt_graph.as_ref().root_nodes().len(), 1);
+
+    let restored = adapter.restore(opt_graph);
+    assert_eq!(restored.nodes.len(), 1);
+    assert_eq!(mock_node_name(&restored.nodes[0]), "n3");
+    assert_eq!(restored.nodes[0].nodes_from.len(), 1);
+    assert_eq!(mock_node_name(&restored.nodes[0].nodes_from[0]), "n2");
+    assert_eq!(restored.nodes[0].nodes_from[0].nodes_from.len(), 1);
+    assert_eq!(
+        mock_node_name(&restored.nodes[0].nodes_from[0].nodes_from[0]),
+        "n1"
+    );
+}
+
+#[test]
+fn test_mock_adapter_roundtrip_shared_parent() {
+    let node_a = Arc::new(MockNode::new("a"));
+    let node_b = Arc::new(MockNode::with_parents("b", vec![node_a.clone()]));
+    let node_c = MockNode::with_parents("c", vec![node_b.clone(), node_a.clone()]);
+    let graph = MockDomainStructure::new(vec![node_c]);
+    let adapter = MockAdapter;
+
+    let opt_graph = adapter.adapt(graph);
+    assert_eq!(opt_graph.as_ref().length(), 3);
+    assert_eq!(opt_graph.as_ref().root_nodes().len(), 1);
+
+    let restored = adapter.restore(opt_graph);
+    assert_eq!(restored.nodes.len(), 1);
+    let restored_c = &restored.nodes[0];
+    assert_eq!(mock_node_name(restored_c), "c");
+    assert_eq!(restored_c.nodes_from.len(), 2);
+    assert_eq!(mock_node_name(&restored_c.nodes_from[0]), "b");
+    assert_eq!(mock_node_name(&restored_c.nodes_from[1]), "a");
+    assert_eq!(restored_c.nodes_from[0].nodes_from.len(), 1);
+    assert!(Arc::ptr_eq(
+        &restored_c.nodes_from[0].nodes_from[0],
+        &restored_c.nodes_from[1]
+    ));
+}

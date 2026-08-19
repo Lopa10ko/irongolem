@@ -26,8 +26,10 @@ fn set_up_tests() -> (DirectAdapter, Vec<Individual>) {
 fn get_objective(graph: Arc<GraphDelegate>) -> Fitness {
     let mut metrics = std::collections::HashMap::new();
     metrics.insert("random_metric".into(), "random".into());
-    let objective = Objective::new(metrics);
-    let _ = RandomMetric::get_value(graph.clone(), Duration::ZERO);
+    let objective = Objective::new(metrics).with_evaluator(
+        "random_metric",
+        Arc::new(|g| RandomMetric::get_value(g, Duration::ZERO)),
+    );
     objective.evaluate(graph)
 }
 
@@ -35,8 +37,10 @@ fn make_objective(delay: Duration) -> Arc<dyn Fn(Arc<GraphDelegate>) -> Fitness 
     Arc::new(move |graph| {
         let mut metrics = std::collections::HashMap::new();
         metrics.insert("random_metric".into(), "random".into());
-        let objective = Objective::new(metrics);
-        let _ = RandomMetric::get_value(graph.clone(), delay);
+        let objective = Objective::new(metrics).with_evaluator(
+            "random_metric",
+            Arc::new(move |g| RandomMetric::get_value(g, delay)),
+        );
         objective.evaluate(graph)
     })
 }
@@ -162,4 +166,32 @@ fn test_dispatcher_with_timeout_multiprocessing() {
 #[test]
 fn test_dispatcher_with_timeout_surrogate() {
     run_timeout_test(|| SurrogateDispatcher::new(Arc::new(DirectAdapter)), false);
+}
+
+#[test]
+fn test_evaluate_missing_evaluator_is_invalid() {
+    let mut metrics = std::collections::HashMap::new();
+    metrics.insert("random_metric".into(), "random".into());
+    let objective = Objective::new(metrics);
+    assert!(!objective.evaluate(Arc::new(graph_first())).is_valid());
+}
+
+#[test]
+fn test_evaluate_configured_objective_is_valid() {
+    let mut metrics = std::collections::HashMap::new();
+    metrics.insert("random_metric".into(), "random".into());
+    let objective = Objective::new(metrics).with_evaluator("random_metric", Arc::new(|_g| 1.5));
+    let fitness = objective.evaluate(Arc::new(graph_first()));
+    assert!(fitness.is_valid());
+    assert_eq!(fitness.values(), vec![1.5]);
+}
+
+#[test]
+fn test_evaluate_missing_complexity_evaluator_is_invalid() {
+    let objective = Objective::multi_objective(
+        std::collections::HashMap::from([("q".into(), "q".into())]),
+        std::collections::HashMap::from([("c".into(), "c".into())]),
+    )
+    .with_evaluator("q", Arc::new(|_g| 1.0));
+    assert!(!objective.evaluate(Arc::new(graph_first())).is_valid());
 }

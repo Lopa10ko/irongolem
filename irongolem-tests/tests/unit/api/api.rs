@@ -31,9 +31,10 @@ fn sample_golem(
 fn test_specifying_parameters_through_api() {
     let node_types = vec!["a".into(), "b".into()];
     let objective = Objective::new(std::collections::HashMap::new());
+    let timeout_minutes = 1.0;
 
     let golem = Golem::new(
-        Some(1.0),
+        Some(timeout_minutes),
         Some(100),
         1,
         None,
@@ -58,6 +59,15 @@ fn test_specifying_parameters_through_api() {
         .with_crossover_types(vec![CrossoverTypesEnum::Subtree]);
 
     assert_eq!(golem.gp_algorithm_parameters.pop_size, expected_gp.pop_size);
+    assert_eq!(golem.gp_algorithm_parameters.max_pop_size, Some(50));
+    assert_eq!(
+        golem.gp_algorithm_parameters.mutation_types,
+        expected_gp.mutation_types
+    );
+    assert_eq!(
+        golem.gp_algorithm_parameters.crossover_types,
+        expected_gp.crossover_types
+    );
     assert!(!golem.gp_algorithm_parameters.multi_objective);
     assert_eq!(
         golem.graph_generation_parameters.available_node_types,
@@ -70,7 +80,7 @@ fn test_specifying_parameters_through_api() {
     );
     assert_eq!(
         golem.graph_requirements.timeout,
-        Some(Duration::from_secs(60))
+        Some(Duration::from_secs_f64(timeout_minutes * 60.0))
     );
 }
 

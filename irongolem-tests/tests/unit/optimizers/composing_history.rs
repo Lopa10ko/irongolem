@@ -83,13 +83,27 @@ fn test_ancestor_for_crossover() {
     let crossover = Crossover::new(opt_parameters, requirements, graph_params);
     let results = crossover.call(vec![parent_ind_first.clone(), parent_ind_second.clone()]);
 
-    for crossover_result in results {
+    for crossover_result in &results {
         assert!(crossover_result.parent_operator.is_some());
         let op = crossover_result.parent_operator.as_ref().unwrap();
         assert_eq!(op.type_, "crossover");
         assert_eq!(op.parents().len(), 2);
         assert_eq!(op.parents()[0].uid, parent_ind_first.uid);
         assert_eq!(op.parents()[1].uid, parent_ind_second.uid);
+    }
+    if results.len() == 2 {
+        let first_parents = &results[0]
+            .parent_operator
+            .as_ref()
+            .unwrap()
+            .parent_individuals;
+        let second_parents = &results[1]
+            .parent_operator
+            .as_ref()
+            .unwrap()
+            .parent_individuals;
+        assert!(Arc::ptr_eq(&first_parents[0], &second_parents[0]));
+        assert!(Arc::ptr_eq(&first_parents[1], &second_parents[1]));
     }
 }
 
@@ -128,7 +142,7 @@ fn test_parent_operator() {
     let operator_for_history = ParentOperator::new(
         "mutation",
         format!("{:?}", MutationTypesEnum::Simple),
-        vec![ind.clone()],
+        vec![Arc::new(ind.clone())],
     );
     assert_eq!(operator_for_history.parents()[0].uid, ind.uid);
     assert_eq!(operator_for_history.type_, "mutation");
@@ -157,7 +171,7 @@ fn test_history_save_custom_nodedata() {
     history.add_to_history(graphs[..3].to_vec(), None, None);
     history.add_to_history(graphs[3..6].to_vec(), None, None);
     history.add_to_history(graphs[6..].to_vec(), None, None);
-    let saved = history.save(None, false);
+    let saved = history.save(None, false).expect("save");
     assert!(!saved.is_empty());
     assert_eq!(history.generations.len(), 3);
 }
@@ -169,7 +183,7 @@ fn test_prepare_for_visualisation() {
     let leaderboard = history.get_leaderboard(10);
     assert!(leaderboard.contains("knn"));
     assert!(leaderboard.contains("Position"));
-    let dumped = history.save(None, false);
+    let dumped = history.save(None, false).expect("save");
     let loaded = OptHistory::load(&dumped).expect("load");
     let leaderboard = loaded.get_leaderboard(10);
     assert!(leaderboard.contains("knn"));
@@ -255,7 +269,7 @@ fn test_extra_history_visualizer() {}
 #[test]
 fn test_history_correct_serialization() {
     let history = generate_history(3, 4);
-    let dumped = history.save(None, false);
+    let dumped = history.save(None, false).expect("save");
     let reloaded = OptHistory::load(&dumped).expect("reload");
     assert_eq!(history.generations.len(), reloaded.generations.len());
     assert_eq!(
@@ -275,7 +289,7 @@ fn test_load_zero_generations_history() {
         is_multi_objective: false,
         metric_names: vec!["rmse".into(), "node_number".into()],
     }));
-    let dumped = history.save(None, false);
+    let dumped = history.save(None, false).expect("save");
     let loaded = OptHistory::load(&dumped).expect("load");
     assert!(loaded.archive_history.is_empty());
     assert!(loaded.generations.is_empty());
@@ -287,7 +301,7 @@ fn test_save_load_light_history() {
     let history = generate_history(100, 1);
     let path =
         std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/data/light_history.json");
-    history.save(Some(&path), true);
+    history.save(Some(&path), true).expect("save");
     let loaded = OptHistory::load(path.to_str().unwrap()).expect("load");
     assert_eq!(loaded.archive_history.len(), loaded.generations.len());
     assert_eq!(loaded.generations.len(), 100);
@@ -303,8 +317,8 @@ fn test_light_history_is_significantly_lighter() {
     let dir = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/data");
     let light_path = dir.join("light_history_tmp.json");
     let heavy_path = dir.join("heavy_history_tmp.json");
-    history.save(Some(&light_path), true);
-    history.save(Some(&heavy_path), false);
+    history.save(Some(&light_path), true).expect("save");
+    history.save(Some(&heavy_path), false).expect("save");
     let light_size = std::fs::metadata(&light_path).unwrap().len();
     let heavy_size = std::fs::metadata(&heavy_path).unwrap().len();
     assert!(light_size * 25 <= heavy_size);

@@ -2,8 +2,12 @@ use std::sync::Arc;
 
 use irongolem::golem::adapter::DirectAdapter;
 use irongolem::golem::dag::Graph;
-use irongolem::golem::optimisers::genetic::params::{GraphGenerationParams, GraphRequirements};
+use irongolem::golem::optimisers::genetic::params::{
+    GPAlgorithmParameters, GraphGenerationParams, GraphRequirements,
+};
+use irongolem::golem::optimisers::genetic::EvoGraphOptimizer;
 use irongolem::golem::optimisers::initial_population_generator::InitialPopulationGenerator;
+use irongolem::golem::optimisers::objective::Objective;
 use test_support::fixtures::{graph_first, graph_second, graph_third};
 
 fn setup_test(
@@ -94,4 +98,54 @@ fn test_initial_population_generation_function() {
             .count();
         assert_eq!(unique_len, generated.len());
     }
+}
+
+#[test]
+fn test_evo_optimizer_generates_population_when_graphs_absent() {
+    let pop_size = 3;
+    let (requirements, graph_generation_params, _) = setup_test(pop_size);
+    let params = GPAlgorithmParameters::new(pop_size);
+    let objective = Objective::new(std::collections::HashMap::new());
+
+    for initial_graphs in [None, Some(Vec::new())] {
+        let opt = EvoGraphOptimizer::new(
+            objective.clone(),
+            initial_graphs,
+            requirements.clone(),
+            graph_generation_params.clone(),
+            params.clone(),
+        );
+        let generated = opt
+            .populational
+            .base
+            .initial_graphs
+            .as_ref()
+            .expect("generated population should be stored");
+        assert_eq!(generated.len(), pop_size);
+        let verifier = &graph_generation_params.verifier;
+        assert!(generated.iter().all(|g| verifier(g)));
+    }
+}
+
+#[test]
+fn test_evo_optimizer_adapts_and_verifies_supplied_graphs() {
+    let adapter = DirectAdapter;
+    let initial_graphs = adapter.adapt_many(vec![graph_first(), graph_second(), graph_third()]);
+    let (requirements, graph_generation_params, _) = setup_test(5);
+    let opt = EvoGraphOptimizer::new(
+        Objective::new(std::collections::HashMap::new()),
+        Some(initial_graphs.clone()),
+        requirements,
+        graph_generation_params.clone(),
+        GPAlgorithmParameters::new(5),
+    );
+    let stored = opt
+        .populational
+        .base
+        .initial_graphs
+        .as_ref()
+        .expect("supplied graphs should be stored");
+    assert_eq!(stored.len(), initial_graphs.len());
+    let verifier = &graph_generation_params.verifier;
+    assert!(stored.iter().all(|g| verifier(g)));
 }
