@@ -7,7 +7,7 @@ use irongolem::golem::dag::{Graph, GraphDelegate, LinkedGraphNode, NodeContent};
 #[derive(Debug, Clone)]
 pub struct MockNode {
     pub content: HashMap<String, serde_json::Value>,
-    pub nodes_from: Vec<MockNode>,
+    pub nodes_from: Vec<Arc<MockNode>>,
 }
 
 impl MockNode {
@@ -21,8 +21,12 @@ impl MockNode {
     }
 
     pub fn with_parent(name: &str, parent: MockNode) -> Self {
+        Self::with_parents(name, vec![Arc::new(parent)])
+    }
+
+    pub fn with_parents(name: &str, parents: Vec<Arc<MockNode>>) -> Self {
         let mut node = Self::new(name);
-        node.nodes_from.push(parent);
+        node.nodes_from = parents;
         node
     }
 }
@@ -41,7 +45,10 @@ impl MockDomainStructure {
 #[derive(Debug, Default, Clone)]
 pub struct MockAdapter;
 
-fn node_from_mock(mock: &MockNode) -> Arc<RwLock<LinkedGraphNode>> {
+fn linked_from_content(
+    mock: &MockNode,
+    parents: Vec<Arc<RwLock<LinkedGraphNode>>>,
+) -> Arc<RwLock<LinkedGraphNode>> {
     let name = mock
         .content
         .get("name")
@@ -58,7 +65,6 @@ fn node_from_mock(mock: &MockNode) -> Arc<RwLock<LinkedGraphNode>> {
             content.extra.insert(k.clone(), v.clone());
         }
     }
-    let parents: Vec<_> = mock.nodes_from.iter().map(node_from_mock).collect();
     if parents.is_empty() {
         LinkedGraphNode::new(content)
     } else {
@@ -66,20 +72,55 @@ fn node_from_mock(mock: &MockNode) -> Arc<RwLock<LinkedGraphNode>> {
     }
 }
 
+fn node_from_arc(
+    mock: &Arc<MockNode>,
+    cache: &mut HashMap<usize, Arc<RwLock<LinkedGraphNode>>>,
+) -> Arc<RwLock<LinkedGraphNode>> {
+    let ptr = Arc::as_ptr(mock) as usize;
+    if let Some(existing) = cache.get(&ptr) {
+        return existing.clone();
+    }
+    let parents: Vec<_> = mock
+        .nodes_from
+        .iter()
+        .map(|parent| node_from_arc(parent, cache))
+        .collect();
+    let node = linked_from_content(mock.as_ref(), parents);
+    cache.insert(ptr, node.clone());
+    node
+}
+
+fn node_from_mock(
+    mock: &MockNode,
+    cache: &mut HashMap<usize, Arc<RwLock<LinkedGraphNode>>>,
+) -> Arc<RwLock<LinkedGraphNode>> {
+    let parents: Vec<_> = mock
+        .nodes_from
+        .iter()
+        .map(|parent| node_from_arc(parent, cache))
+        .collect();
+    linked_from_content(mock, parents)
+}
+
 impl MockAdapter {
     fn to_graph(&self, domain: &MockDomainStructure) -> GraphDelegate {
         if domain.nodes.is_empty() {
             return GraphDelegate::empty();
         }
-        let arcs: Vec<_> = domain.nodes.iter().map(node_from_mock).collect();
+        let mut cache = HashMap::new();
+        let arcs: Vec<_> = domain
+            .nodes
+            .iter()
+            .map(|node| node_from_mock(node, &mut cache))
+            .collect();
         GraphDelegate::with_roots(arcs)
     }
 
     fn to_domain(&self, graph: &GraphDelegate) -> MockDomainStructure {
         fn mock_from_opt(
             node: &Arc<RwLock<LinkedGraphNode>>,
-            cache: &mut HashMap<usize, MockNode>,
-        ) -> MockNode {
+            cache: &mut HashMap<usize, Arc<MockNode>>,
+        ) -> Arc<MockNode> {
             let ptr = Arc::as_ptr(node) as usize;
             if let Some(cached) = cache.get(&ptr) {
                 return cached.clone();
@@ -107,19 +148,19 @@ impl MockAdapter {
                 .map(|p| mock_from_opt(p, cache))
                 .collect();
             drop(guard);
-            let mock = MockNode {
+            let mock = Arc::new(MockNode {
                 content,
                 nodes_from: parents,
-            };
+            });
             cache.insert(ptr, mock.clone());
             mock
         }
 
         let mut cache = HashMap::new();
         let nodes = graph
-            .nodes()
+            .root_nodes()
             .into_iter()
-            .map(|n| mock_from_opt(&n, &mut cache))
+            .map(|n| (*mock_from_opt(&n, &mut cache)).clone())
             .collect();
         MockDomainStructure { nodes }
     }

@@ -33,8 +33,10 @@ pub struct MutationParams {
 pub fn get_objective(graph: Arc<GraphDelegate>) -> Fitness {
     let mut metrics = HashMap::new();
     metrics.insert("random_metric".into(), "random".into());
-    let objective = Objective::new(metrics);
-    let _ = RandomMetric::get_value(graph.clone(), Duration::ZERO);
+    let objective = Objective::new(metrics).with_evaluator(
+        "random_metric",
+        Arc::new(|g| RandomMetric::get_value(g, Duration::ZERO)),
+    );
     objective.evaluate(graph)
 }
 
