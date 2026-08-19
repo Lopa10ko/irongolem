@@ -1,6 +1,7 @@
 //! iterator
 
 #[test]
+#[ignore = "deferred: SequenceIterator not ported"]
 fn test_iterator_without_constraints() {
     // def test_iterator_without_constraints():
     //     sequence_generation_function = fibonacci_sequence
@@ -12,6 +13,7 @@ fn test_iterator_without_constraints() {
 }
 
 #[test]
+#[ignore = "deferred: SequenceIterator not ported"]
 fn test_iterator_from_certain_index() {
     // def test_iterator_from_certain_index():
     //     sequence_generation_function = fibonacci_sequence
@@ -23,6 +25,7 @@ fn test_iterator_from_certain_index() {
 }
 
 #[test]
+#[ignore = "deferred: SequenceIterator not ported"]
 fn test_iterator_with_max_min_constraints() {
     // def test_iterator_with_max_min_constraints():
     //     sequence_generation_function = fibonacci_sequence

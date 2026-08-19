@@ -59,7 +59,8 @@ impl Mutation {
         }
 
         let init_graph = individual.graph.clone();
-        let mut result = individual;
+        let parent = individual;
+        let mut result = parent.clone();
 
         for _ in 0..self.base.parameters.max_num_of_operator_attempts {
             let new_graph = result.graph.deep_clone();
@@ -81,7 +82,12 @@ impl Mutation {
         if *result.graph == *init_graph {
             None
         } else {
-            Some(result)
+            let op = crate::golem::optimisers::history::ParentOperator::new(
+                "mutation",
+                format!("{mutation_type:?}"),
+                vec![Arc::new(parent)],
+            );
+            Some(result.with_parent_operator(op))
         }
     }
 
@@ -91,11 +97,13 @@ impl Mutation {
     }
 }
 
+#[allow(clippy::large_enum_variant)]
 pub enum MutationTarget {
     Individual(Individual),
     Population(PopulationT),
 }
 
+#[allow(clippy::large_enum_variant)]
 pub enum MutationResult {
     Individual(Option<Individual>),
     Population(PopulationT),

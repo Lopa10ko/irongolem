@@ -1,0 +1,17 @@
+[package]
+name = "irongolem-bench"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish = false
+description = "Matched Python/Rust experiment harness for irongolem vs GOLEM"
+
+[[bin]]
+name = "bench_custom"
+path = "bench_custom.rs"
+
+[dependencies]
+irongolem = { path = "../crates/irongolem" }
+test-support = { path = "../crates/test-support" }
+serde.workspace = true
+serde_json.workspace = true

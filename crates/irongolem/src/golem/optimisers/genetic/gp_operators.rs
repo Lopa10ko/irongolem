@@ -5,7 +5,8 @@ use crate::golem::dag::{
     clone_subtree, descriptive_id_recursive_nodes, distance_to_primary_level, Graph, GraphDelegate,
     GraphNode, LinkedGraphNode,
 };
-use crate::golem::optimisers::history::{Individual, ParetoFront};
+use crate::golem::optimisers::archive::ParetoFront;
+use crate::golem::optimisers::history::Individual;
 
 pub type NodePair = (Arc<RwLock<LinkedGraphNode>>, Arc<RwLock<LinkedGraphNode>>);
 

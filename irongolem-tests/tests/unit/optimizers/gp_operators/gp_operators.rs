@@ -64,7 +64,7 @@ fn test_filter_duplicates() {
             Some(&weights),
         )));
     }
-    archive.update(archive_items);
+    archive.update(&archive_items);
     let filtered_archive = filter_duplicates(&archive, &population);
     assert_eq!(filtered_archive.len(), 1);
     assert_eq!(filtered_archive[0].fitness.values()[0], -0.80001);
