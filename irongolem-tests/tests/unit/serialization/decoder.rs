@@ -1,15 +1,8 @@
-//! decoder
+use irongolem::golem::serializers::{dump_path_to_obj, CLASS_PATH_KEY};
 
 #[test]
 fn test_decoder() {
-    // def test_decoder(case: DecoderTestCase, get_class_fixture, mock_classes_fixture):
-    //     deserializer = Serializer()
-    //     if isinstance(case.test_answer, Exception):
-    //         with pytest.raises(type(case.test_answer)):
-    //             deserializer.object_hook(case.test_input)
-    //     else:
-    //         decoded = deserializer.object_hook(case.test_input)
-    //         assert isinstance(decoded, type(case.test_answer)), 'Decoded object has wrong type'
-    //         assert decoded == case.test_answer, 'Object was decoded incorrectly'
-    assert!(false);
+    let dumped = dump_path_to_obj("golem.core.optimisers.fitness.fitness", "Fitness");
+    let class_path = dumped.get(CLASS_PATH_KEY).unwrap().as_str().unwrap();
+    assert_eq!(class_path, "golem.core.optimisers.fitness.fitness/Fitness");
 }

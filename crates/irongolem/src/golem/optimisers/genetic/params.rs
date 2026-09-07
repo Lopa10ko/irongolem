@@ -1,9 +1,11 @@
 use std::sync::atomic::{AtomicUsize, Ordering as AtomicOrdering};
 use std::sync::{Arc, RwLock};
+use std::time::Duration;
 
 use super::operators::base_mutations::MutationTypesEnum;
 use super::operators::crossover::CrossoverTypesEnum;
 use super::operators::elitism::ElitismTypesEnum;
+use crate::golem::adapter::{DirectAdapter, OptimizationAdapter};
 use crate::golem::dag::{
     has_no_cycle, has_no_isolated_components, has_no_isolated_nodes, has_no_self_cycled_nodes,
     GraphDelegate, LinkedGraphNode,
@@ -17,6 +19,15 @@ type NodeArc = Arc<RwLock<LinkedGraphNode>>;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct GraphRequirements {
+    pub num_of_generations: Option<usize>,
+    pub timeout: Option<Duration>,
+    pub early_stopping_iterations: Option<usize>,
+    pub early_stopping_timeout: Option<f64>,
+    pub keep_n_best: usize,
+    pub n_jobs: i32,
+    pub show_progress: bool,
+    pub keep_history: bool,
+    pub start_depth: usize,
     pub max_depth: usize,
     pub min_arity: usize,
     pub max_arity: usize,
@@ -26,6 +37,15 @@ pub struct GraphRequirements {
 impl Default for GraphRequirements {
     fn default() -> Self {
         Self {
+            num_of_generations: None,
+            timeout: Some(Duration::from_secs(5 * 60)),
+            early_stopping_iterations: Some(50),
+            early_stopping_timeout: Some(5.0),
+            keep_n_best: 1,
+            n_jobs: 1,
+            show_progress: true,
+            keep_history: true,
+            start_depth: 3,
             max_depth: 5,
             min_arity: 1,
             max_arity: 4,
@@ -38,6 +58,7 @@ pub type GraphVerifier = Arc<dyn Fn(&GraphDelegate) -> bool + Send + Sync>;
 
 #[derive(Clone)]
 pub struct GraphGenerationParams {
+    pub adapter: Arc<dyn OptimizationAdapter>,
     pub available_node_types: Vec<String>,
     pub node_factory: Arc<OptNodeFactory>,
     pub verifier: GraphVerifier,
@@ -62,12 +83,18 @@ impl GraphGenerationParams {
             factory.clone(),
         ));
         Self {
+            adapter: Arc::new(DirectAdapter),
             available_node_types,
             node_factory: factory,
             verifier,
             advisor: Arc::new(DefaultAdvisor),
             random_graph_factory,
         }
+    }
+
+    pub fn with_adapter(mut self, adapter: Arc<dyn OptimizationAdapter>) -> Self {
+        self.adapter = adapter;
+        self
     }
 
     pub fn with_rng(mut self, rng: GeneticRng) -> Self {

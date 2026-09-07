@@ -5,6 +5,7 @@
 pub mod golem;
 
 pub use golem::adapter::DirectAdapter;
+pub use golem::api::Golem;
 pub use golem::dag::{
     Graph, GraphDelegate, GraphImpl, GraphNode, LinkedGraph, LinkedGraphNode, NodeContent,
     ReconnectType,

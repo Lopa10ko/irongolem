@@ -88,7 +88,12 @@ pub fn graph_fourth() -> GraphDelegate {
     for _ in 0..2 {
         link(&new_node, LinkedGraphNode::from_name("b"));
     }
-    graph.add_node(new_node);
+    let old = {
+        let root = graph.root_node().expect("graph_third has a root");
+        let replacement = root.read().unwrap().nodes_from[1].clone();
+        replacement
+    };
+    graph.update_subtree(&old, &new_node);
     graph
 }
 

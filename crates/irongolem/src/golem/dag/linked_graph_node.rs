@@ -10,6 +10,8 @@ use super::graph_node::GraphNode;
 pub struct NodeContent {
     pub name: String,
     pub params: BTreeMap<String, Value>,
+    /// Extra content keys (Python `important_field`, `matrix`, metadata, …).
+    pub extra: BTreeMap<String, Value>,
 }
 
 impl NodeContent {
@@ -17,6 +19,7 @@ impl NodeContent {
         Self {
             name: name.into(),
             params: BTreeMap::new(),
+            extra: BTreeMap::new(),
         }
     }
 
@@ -24,6 +27,7 @@ impl NodeContent {
         Self {
             name: name.into(),
             params,
+            extra: BTreeMap::new(),
         }
     }
 }
@@ -57,6 +61,14 @@ impl LinkedGraphNode {
 
     pub fn from_name(name: &str) -> Arc<RwLock<Self>> {
         Self::new(NodeContent::new(name))
+    }
+
+    pub fn with_uid(uid: impl Into<String>, content: NodeContent) -> Arc<RwLock<Self>> {
+        Arc::new(RwLock::new(Self {
+            uid: uid.into(),
+            content,
+            nodes_from: Vec::new(),
+        }))
     }
 }
 

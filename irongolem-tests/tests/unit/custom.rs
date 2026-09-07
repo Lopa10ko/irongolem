@@ -1,52 +1,69 @@
-//! custom
+use std::sync::Arc;
+
+use irongolem::golem::dag::{has_no_self_cycled_nodes, Graph};
+use irongolem::golem::optimisers::genetic::operators::base_mutations::MutationTypesEnum;
+use irongolem::golem::optimisers::genetic::params::{
+    GPAlgorithmParameters, GraphGenerationParams, GraphRequirements,
+};
+use irongolem::golem::optimisers::genetic::EvoGraphOptimizer;
+use irongolem::golem::optimisers::initial_population_generator::InitialPopulationGenerator;
+use irongolem::golem::optimisers::objective::ObjectiveEvaluate;
+use test_support::fixtures::{
+    custom_initial_graphs, custom_objective, CustomDirectAdapter, CustomModel,
+};
 
 #[test]
 fn test_custom_graph_opt() {
-    // def test_custom_graph_opt():
-    //     """Test checks for the use case of custom graph optimisation:
-    //     that it can be initialised without problem and returns sane result."""
-    //
-    //     nodes_types = ['A', 'B', 'C', 'D']
-    //     rules = [has_no_self_cycled_nodes]
-    //
-    //     requirements = GraphRequirements(
-    //         num_of_generations=5,
-    //         show_progress=False)
-    //
-    //     optimiser_parameters = GPAlgorithmParameters(
-    //         pop_size=5,
-    //         genetic_scheme_type=GeneticSchemeTypesEnum.steady_state,
-    //         mutation_types=[
-    //             MutationTypesEnum.simple,
-    //             MutationTypesEnum.reduce,
-    //             MutationTypesEnum.growth,
-    //             MutationTypesEnum.local_growth],
-    //         regularization_type=RegularizationTypesEnum.none)
-    //
-    //     graph_generation_params = GraphGenerationParams(
-    //         adapter=DirectAdapter(CustomModel, CustomNode),
-    //         rules_for_constraint=rules,
-    //         node_factory=DefaultOptNodeFactory(available_node_types=nodes_types))
-    //
-    //     objective = Objective({'custom': custom_metric})
-    //     initial_graphs = [graph_first(), graph_second(), graph_third(), graph_fourth(), graph_fifth()]
-    //     init_population = InitialPopulationGenerator(optimiser_parameters.pop_size,
-    //                                                  graph_generation_params, requirements)\
-    //         .with_initial_graphs(initial_graphs)()
-    //     optimiser = EvoGraphOptimizer(
-    //         graph_generation_params=graph_generation_params,
-    //         objective=objective,
-    //         graph_optimizer_params=optimiser_parameters,
-    //         requirements=requirements,
-    //         initial_graphs=init_population)
-    //
-    //     objective_eval = ObjectiveEvaluate(objective)
-    //     optimized_graphs = optimiser.optimise(objective_eval)
-    //     optimized_network = optimiser.graph_generation_params.adapter.restore(optimized_graphs[0])
-    //
-    //     assert optimized_network is not None
-    //     assert isinstance(optimized_network, CustomModel)
-    //     assert isinstance(optimized_network.nodes[0], CustomNode)
-    //     assert optimized_network.length > 1
-    assert!(false);
+    let nodes_types = vec!["A", "B", "C", "D"]
+        .into_iter()
+        .map(String::from)
+        .collect::<Vec<_>>();
+
+    let mut requirements = GraphRequirements::default();
+    requirements.num_of_generations = Some(5);
+    requirements.show_progress = false;
+    requirements.early_stopping_iterations = Some(1000);
+
+    let optimiser_parameters = GPAlgorithmParameters::new(5)
+        .with_mutation_types(vec![
+            MutationTypesEnum::Simple,
+            MutationTypesEnum::Reduce,
+            MutationTypesEnum::Growth,
+            MutationTypesEnum::LocalGrowth,
+        ])
+        .with_random_seed(1);
+
+    let mut graph_generation_params = GraphGenerationParams::new(nodes_types);
+    graph_generation_params.verifier = Arc::new(|graph| has_no_self_cycled_nodes(graph).is_ok());
+
+    let adapter = CustomDirectAdapter;
+    let objective = custom_objective();
+    let initial_graphs: Vec<_> = custom_initial_graphs();
+    let init_population = InitialPopulationGenerator::new(
+        optimiser_parameters.pop_size,
+        graph_generation_params.clone(),
+        requirements.clone(),
+    )
+    .with_initial_graphs(
+        initial_graphs
+            .into_iter()
+            .map(|m| adapter.adapt(m))
+            .collect(),
+    )
+    .generate();
+
+    let mut optimiser = EvoGraphOptimizer::new(
+        objective.clone(),
+        Some(init_population),
+        requirements,
+        graph_generation_params,
+        optimiser_parameters,
+    );
+
+    let objective_eval = ObjectiveEvaluate::new(objective);
+    let optimized_graphs = optimiser.optimise(&objective_eval).expect("optimise");
+    let optimized_network = adapter.restore(optimized_graphs[0].clone());
+
+    assert!(optimized_network.length() > 1);
+    assert!(!optimized_network.nodes().is_empty());
 }

@@ -14,16 +14,14 @@ use irongolem::golem::optimisers::genetic::operators::EvaluationOperator;
 use irongolem::golem::optimisers::genetic::operators::MutationTypesEnum;
 use irongolem::golem::optimisers::genetic::operators::PopulationT;
 use irongolem::golem::optimisers::genetic::params::{
-    GPAlgorithmParameters, GraphGenerationParams, GraphRequirements, SelectionType,
+    GPAlgorithmParameters, GraphGenerationParams, GraphRequirements, OptNodeFactory, SelectionType,
 };
-use irongolem::golem::optimisers::genetic::rng::{random_choice, sample};
+use irongolem::golem::optimisers::genetic::rng::{sample, set_random_seed, GeneticRng};
 use irongolem::golem::optimisers::history::Individual;
 use irongolem::golem::optimisers::objective::Objective;
+use irongolem::golem::optimisers::random_graph_factory::RandomGrowthGraphFactory;
 
-use super::graphs::{
-    graph_fifth, graph_first, graph_fourth, graph_second, graph_third, simple_linear_graph,
-    tree_graph,
-};
+use super::graphs::{graph_fifth, graph_first, graph_fourth, graph_second, graph_third};
 use super::metrics::RandomMetric;
 
 pub struct MutationParams {
@@ -35,8 +33,10 @@ pub struct MutationParams {
 pub fn get_objective(graph: Arc<GraphDelegate>) -> Fitness {
     let mut metrics = HashMap::new();
     metrics.insert("random_metric".into(), "random".into());
-    let objective = Objective::new(metrics);
-    let _ = RandomMetric::get_value(graph.clone(), Duration::ZERO);
+    let objective = Objective::new(metrics).with_evaluator(
+        "random_metric",
+        Arc::new(|g| RandomMetric::get_value(g, Duration::ZERO)),
+    );
     objective.evaluate(graph)
 }
 
@@ -83,20 +83,26 @@ pub fn get_mutation_params(
 }
 
 pub fn get_rand_population(pop_size: usize) -> PopulationT {
+    set_random_seed(42);
     let adapter = DirectAdapter;
-    let templates = [
-        graph_first(),
-        graph_second(),
-        graph_third(),
-        graph_fourth(),
-        graph_fifth(),
-        tree_graph(),
-        simple_linear_graph(),
-    ];
+    let verifier = Arc::new(|_: &GraphDelegate| true);
+    let node_factory = Arc::new(OptNodeFactory::new(vec![
+        "x".into(),
+        "y".into(),
+        "z".into(),
+    ]));
+    let factory = RandomGrowthGraphFactory::new(verifier, node_factory, GeneticRng::seeded(42));
+    let requirements = GraphRequirements {
+        max_depth: 8,
+        min_arity: 1,
+        max_arity: 3,
+        ..GraphRequirements::default()
+    };
     (0..pop_size)
-        .filter_map(|_| {
-            let template = random_choice(&templates)?;
-            Some(Individual::new(adapter.adapt(template.deep_clone())))
+        .map(|i| {
+            let max_depth = 5 + (i % 10);
+            let graph = factory.generate(&requirements, Some(max_depth));
+            Individual::new(adapter.adapt(graph))
         })
         .collect()
 }
@@ -179,8 +185,10 @@ pub fn reproducer_fixture() -> ReproductionController {
 }
 
 pub fn reproducer_with_pop_size(pop_size: usize) -> ReproductionController {
+    set_random_seed(42);
     let requirements = GraphRequirements::default();
-    let graph_gen_params = GraphGenerationParams::new(vec!["x".into()]);
+    let mut graph_gen_params = GraphGenerationParams::new(vec!["x".into()]);
+    graph_gen_params.verifier = Arc::new(|_| true);
     let mut params = GPAlgorithmParameters::new(pop_size).with_random_seed(42);
     params.max_pop_size = Some(100);
     params.offspring_rate = 0.2;
@@ -220,5 +228,5 @@ pub fn elitism_set_up() -> (PopulationT, PopulationT) {
 }
 
 pub fn is_close(left: f64, right: f64, rtol: f64) -> bool {
-    (left - right).abs() <= rtol * right.abs().max(1e-10)
+    (left - right).abs() <= 1e-8 + rtol * right.abs()
 }

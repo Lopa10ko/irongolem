@@ -46,6 +46,10 @@ impl SingleObjFitness {
         Self { values }
     }
 
+    pub fn raw_values(&self) -> &[Option<f64>] {
+        &self.values
+    }
+
     pub fn is_valid(&self) -> bool {
         self.values.first().and_then(|v| *v).is_some()
     }

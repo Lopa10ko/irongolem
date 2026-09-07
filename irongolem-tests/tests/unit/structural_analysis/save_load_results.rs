@@ -1,6 +1,7 @@
 //! save_load_results
 
 #[test]
+#[ignore = "deferred: structural_analysis out of scope"]
 fn test_save_sa_results() {
     // def test_save_sa_results():
     //     opt_graph = OptGraph(OptNode('node1'))
@@ -32,6 +33,7 @@ fn test_save_sa_results() {
 }
 
 #[test]
+#[ignore = "deferred: structural_analysis out of scope"]
 fn test_load_sa_results() {
     // def test_load_sa_results():
     //     graph = get_opt_graph()

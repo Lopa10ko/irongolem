@@ -27,3 +27,7 @@ docs/ARCHITECTURE.md
 docs/MODULE_MAP.md
 docs/RUST_LEARNING.md
 scripts/test-module.sh
+
+# Experiment outputs
+examples/results/
+.venv/

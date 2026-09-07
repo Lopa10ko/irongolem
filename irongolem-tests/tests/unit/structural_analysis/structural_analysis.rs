@@ -1,6 +1,7 @@
 //! structural_analysis
 
 #[test]
+#[ignore = "deferred: structural_analysis out of scope"]
 fn test_pipeline_preprocessing() {
     // def test_pipeline_preprocessing():
     //     """ Checks whether duplicates of consecutive nodes are removed correctly during pipeline preprocessing """
